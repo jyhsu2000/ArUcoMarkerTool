@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import time
-from collections import deque
 
 import PySimpleGUI as sg
 import cv2
 import cv2.aruco as aruco
+
+from utils import CameraLooper
 
 ARUCO_DICT = {
     "DICT_4X4_50": aruco.DICT_4X4_50,
@@ -50,13 +50,7 @@ def main():
 
     window = sg.Window('ArUcoMarkerDemo', layout, location=(100, 100))
 
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    cap.set(cv2.CAP_PROP_FPS, 30)
-
-    recent_frame_count = 10
-    recent_frame_time = deque([0.0], maxlen=recent_frame_count)
+    camera_looper = CameraLooper(window)
 
     selected_aruco_dict = ARUCO_DICT['DICT_ARUCO_ORIGINAL']
 
@@ -68,7 +62,9 @@ def main():
         if event == 'dict_select':
             selected_aruco_dict = ARUCO_DICT[values['dict_select']]
 
-        ret, frame = cap.read()
+        ret, frame = camera_looper.read()
+        if not ret:
+            continue
 
         aruco_dict = aruco.Dictionary_get(selected_aruco_dict)
         aruco_params = aruco.DetectorParameters_create()
@@ -111,11 +107,7 @@ def main():
 
         img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         window['image'].update(data=img_bytes)
-
-        new_frame_time = time.time()
-        fps = 1 / ((new_frame_time - recent_frame_time[0]) / recent_frame_count)
-        recent_frame_time.append(new_frame_time)
-        window['fps'].update(f'{fps:.1f} fps')
+        window['fps'].update(f'{camera_looper.fps:.1f} fps')
 
 
 if __name__ == '__main__':
