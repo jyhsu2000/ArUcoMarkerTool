@@ -80,7 +80,7 @@ def main():
             # flatten the ArUco IDs list
             ids = ids.flatten()
 
-            aruco.drawDetectedMarkers(frame, corners)
+            aruco.drawDetectedMarkers(frame, corners, ids)
 
             # loop over the detected ArUCo corners
             for (markerCorner, markerID) in zip(corners, ids):
