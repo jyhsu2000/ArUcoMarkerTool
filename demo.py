@@ -45,8 +45,8 @@ def main():
                      default_value='DICT_ARUCO_ORIGINAL', enable_events=True),
         ],
         [
-            sg.Text('', key='capture_fps', size=(20, 1), justification='center', font='Helvetica 20'),
-            sg.Text('', key='show_fps', size=(20, 1), justification='center', font='Helvetica 20'),
+            sg.Text('', key='capture_fps', size=(15, 1), justification='center', font='Helvetica 20'),
+            sg.Text('', key='process_fps', size=(15, 1), justification='center', font='Helvetica 20'),
             sg.Text('', key='marker_count', size=(10, 1), justification='center', font='Helvetica 20'),
         ],
     ]
@@ -121,7 +121,7 @@ def main():
         new_frame_time = time.time()
         show_fps = 1 / ((new_frame_time - recent_frame_time[0]) / recent_frame_count)
         recent_frame_time.append(new_frame_time)
-        window['show_fps'].update(f'Show: {show_fps:.1f} fps')
+        window['process_fps'].update(f'Process: {show_fps:.1f} fps')
 
 
 if __name__ == '__main__':
