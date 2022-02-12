@@ -122,6 +122,7 @@ def embed_img(src_img: np.array, dest_img: np.array, dest_points: list, alpha: f
     return output
 
 
+@functools.lru_cache(maxsize=999)
 def create_text_pad(text: str = 'Text', text_color=(0, 255, 255), bg_color=(255, 0, 0)) -> np.array:
     font = cv2.FONT_HERSHEY_SIMPLEX
     text_scale = 5
