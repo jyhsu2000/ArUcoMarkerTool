@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+import time
+from collections import deque
 
 import PySimpleGUI as sg
-import cv2
 import cv2.aruco as aruco
+from PIL import Image, ImageTk
 
 from utils import CameraLooper, embed_img, create_text_pad
 
@@ -43,7 +45,8 @@ def main():
                      default_value='DICT_ARUCO_ORIGINAL', enable_events=True),
         ],
         [
-            sg.Text('', key='fps', size=(10, 1), justification='center', font='Helvetica 20'),
+            sg.Text('', key='capture_fps', size=(20, 1), justification='center', font='Helvetica 20'),
+            sg.Text('', key='show_fps', size=(20, 1), justification='center', font='Helvetica 20'),
             sg.Text('', key='marker_count', size=(10, 1), justification='center', font='Helvetica 20'),
         ],
     ]
@@ -54,6 +57,8 @@ def main():
 
     selected_aruco_dict = ARUCO_DICT['DICT_ARUCO_ORIGINAL']
 
+    recent_frame_count = 10
+    recent_frame_time = deque([0.0], maxlen=recent_frame_count)
     while True:
         event, values = window.read(timeout=0)
         if event == sg.WIN_CLOSED:
@@ -108,9 +113,15 @@ def main():
                 text_pad = create_text_pad(str(markerID))
                 frame = embed_img(text_pad, frame, [top_left, bottom_left, bottom_right, top_right], alpha=0.7)
 
-        img_bytes = cv2.imencode('.png', frame)[1].tobytes()
+        # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
+        img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
         window['image'].update(data=img_bytes)
-        window['fps'].update(f'{camera_looper.fps:.1f} fps')
+        window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
+
+        new_frame_time = time.time()
+        show_fps = 1 / ((new_frame_time - recent_frame_time[0]) / recent_frame_count)
+        recent_frame_time.append(new_frame_time)
+        window['show_fps'].update(f'Show: {show_fps:.1f} fps')
 
 
 if __name__ == '__main__':
