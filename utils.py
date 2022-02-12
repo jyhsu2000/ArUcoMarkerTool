@@ -102,16 +102,16 @@ class CameraLooper(threading.Thread):
 def embed_img(src_img: np.array, dest_img: np.array, dest_points: list, alpha: float = 1) -> np.array:
     h, w, _ = dest_img.shape
     # 座標
-    src_points = np.array([(0, 0), (0, h), (w, h), (w, 0)])
-    dest_points = np.array(dest_points)
+    src_points = np.array([(0, 0), (0, h), (w, h), (w, 0)], dtype=np.float32)
+    dest_points = np.array(dest_points, dtype=np.float32)
     # 計算轉換矩陣
-    homo, status = cv2.findHomography(src_points, dest_points)
+    transformation_matrix = cv2.getPerspectiveTransform(src_points, dest_points)
     # 轉換圖片座標
     src_img = cv2.resize(src_img, (w, h))
-    p_src_img = cv2.warpPerspective(src_img, homo, (w, h))
+    p_src_img = cv2.warpPerspective(src_img, transformation_matrix, (w, h))
     # 建立遮罩
     white_pad = np.full((h, w), 255, np.uint8)
-    fg_mask = cv2.warpPerspective(white_pad, homo, (w, h))
+    fg_mask = cv2.warpPerspective(white_pad, transformation_matrix, (w, h))
     bg_mask = cv2.bitwise_not(fg_mask)
     # 合成
     masked_fg_img = cv2.bitwise_or(p_src_img, p_src_img, mask=fg_mask)
