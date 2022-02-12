@@ -4,6 +4,7 @@ from collections import deque
 
 import PySimpleGUI as sg
 import cv2.aruco as aruco
+import numpy as np
 from PIL import Image, ImageTk
 
 from utils import CameraLooper, embed_img, create_text_pad
@@ -43,6 +44,8 @@ def main():
             sg.Text('ArUco Dictionary:'),
             sg.Combo(values=list(ARUCO_DICT.keys()), key='dict_select', readonly=True, size=(40, 1),
                      default_value='DICT_ARUCO_ORIGINAL', enable_events=True),
+            sg.Checkbox('Draw custom marker', key='draw_custom_marker', enable_events=True, default=True),
+            sg.Checkbox('Draw axis', key='draw_axis', enable_events=True, default=False),
         ],
         [
             sg.Text('', key='capture_fps', size=(15, 1), justification='center', font='Helvetica 20'),
@@ -56,9 +59,18 @@ def main():
     camera_looper = CameraLooper(window)
 
     selected_aruco_dict = ARUCO_DICT['DICT_ARUCO_ORIGINAL']
+    draw_axis = False
+    draw_custom_marker = True
 
     recent_frame_count = 10
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
+
+    # 鏡頭校準相關參數，暫時先寫死
+    camera_matrix = np.array([[2000., 0., 720 / 2.],
+                              [0., 2000., 1280 / 2.],
+                              [0., 0., 1.]])
+    distortion_coefficients = np.array([0., 0., 0., 0., 0.])
+
     while True:
         event, values = window.read(timeout=0)
         if event == sg.WIN_CLOSED:
@@ -66,6 +78,10 @@ def main():
 
         if event == 'dict_select':
             selected_aruco_dict = ARUCO_DICT[values['dict_select']]
+        if event == 'draw_custom_marker':
+            draw_custom_marker = values['draw_custom_marker']
+        if event == 'draw_axis':
+            draw_axis = values['draw_axis']
 
         ret, frame = camera_looper.read()
         if not ret:
@@ -81,7 +97,8 @@ def main():
             # flatten the ArUco IDs list
             ids = ids.flatten()
 
-            # aruco.drawDetectedMarkers(frame, corners, ids)
+            if not draw_custom_marker:
+                aruco.drawDetectedMarkers(frame, corners, ids)
 
             # loop over the detected ArUCo corners
             for (markerCorner, markerID) in zip(corners, ids):
@@ -100,8 +117,8 @@ def main():
                 # cv2.line(frame, bottom_left, top_left, (0, 255, 0), 2)
 
                 # compute and draw the center (x, y)-coordinates of the ArUco marker
-                c_x = int((top_left[0] + bottom_right[0]) / 2.0)
-                c_y = int((top_left[1] + bottom_right[1]) / 2.0)
+                # c_x = int((top_left[0] + bottom_right[0]) / 2.0)
+                # c_y = int((top_left[1] + bottom_right[1]) / 2.0)
                 # # cv2.circle(frame, (c_x, c_y), 4, (0, 0, 255), -1)
 
                 # draw the ArUco marker ID on the frame
@@ -110,8 +127,14 @@ def main():
                 #             cv2.FONT_HERSHEY_SIMPLEX,
                 #             0.5, (0, 255, 0), 1)
 
-                text_pad = create_text_pad(str(markerID))
-                frame = embed_img(text_pad, frame, [top_left, bottom_left, bottom_right, top_right], alpha=0.7)
+                if draw_custom_marker:
+                    text_pad = create_text_pad(str(markerID))
+                    frame = embed_img(text_pad, frame, [top_left, bottom_left, bottom_right, top_right], alpha=0.7)
+
+                # 繪製軸線
+                if draw_axis:
+                    rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
+                    aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rvec, tvec, 0.01)
 
         # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
