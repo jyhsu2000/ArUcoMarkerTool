@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 import cv2
 import cv2.aruco as aruco
 
-from utils import CameraLooper
+from utils import CameraLooper, embed_img, create_text_pad
 
 ARUCO_DICT = {
     "DICT_4X4_50": aruco.DICT_4X4_50,
@@ -76,7 +76,7 @@ def main():
             # flatten the ArUco IDs list
             ids = ids.flatten()
 
-            aruco.drawDetectedMarkers(frame, corners, ids)
+            # aruco.drawDetectedMarkers(frame, corners, ids)
 
             # loop over the detected ArUCo corners
             for (markerCorner, markerID) in zip(corners, ids):
@@ -100,10 +100,13 @@ def main():
                 # # cv2.circle(frame, (c_x, c_y), 4, (0, 0, 255), -1)
 
                 # draw the ArUco marker ID on the frame
-                cv2.putText(frame, str(markerID),
-                            (top_left[0], top_left[1] - 15),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5, (0, 255, 0), 1)
+                # cv2.putText(frame, str(markerID),
+                #             (top_left[0], top_left[1] - 15),
+                #             cv2.FONT_HERSHEY_SIMPLEX,
+                #             0.5, (0, 255, 0), 1)
+
+                text_pad = create_text_pad(str(markerID))
+                frame = embed_img(text_pad, frame, [top_left, bottom_left, bottom_right, top_right], alpha=0.7)
 
         img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         window['image'].update(data=img_bytes)
