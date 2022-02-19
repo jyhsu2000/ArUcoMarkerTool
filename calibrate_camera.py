@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import copy
 import os.path
+import threading
 import time
 from collections import deque
 
@@ -25,6 +26,28 @@ h = 6  # 7  - 1
 objp = np.zeros((w * h, 3), np.float32)
 objp[:, :2] = np.mgrid[0:w, 0:h].T.reshape(-1, 2)
 objp = objp * 18.1  # 18.1 mm
+
+
+def update_thumbnail_images(window, file_path: str):
+    image = cv2.imread(file_path)
+    thumbnail_image = imutils.resize(image, width=thumbnail_size[0], height=thumbnail_size[1])
+    # window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # 找到棋盤格角點
+    ret, corners = cv2.findChessboardCorners(gray, (w, h), None)
+    image_with_marker = copy.deepcopy(image)
+    if ret:
+        # 在原角點的基礎上尋找亞像素角點
+        cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+        # 追加進入世界三維點和平面二維點中
+        # objpoints.append(objp)
+        # imgpoints.append(corners)
+        # 將角點在圖像上顯示
+        cv2.drawChessboardCorners(image_with_marker, (w, h), corners, ret)
+    thumbnail_image_with_marker = imutils.resize(image_with_marker, width=thumbnail_size[0], height=thumbnail_size[1])
+    # window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
+    window.write_event_value('update_thumbnail_images', (thumbnail_image, thumbnail_image_with_marker))
 
 
 def main():
@@ -66,24 +89,13 @@ def main():
             return
 
         if event == 'listbox':
-            # FIXME: 處理過慢，拖慢主執行緒
-            image = cv2.imread(os.path.join(calibration_images_path, values['listbox'][0]))
-            thumbnail_image = imutils.resize(image, width=thumbnail_size[0], height=thumbnail_size[1])
-            window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
+            file_path = os.path.join(calibration_images_path, values['listbox'][0])
+            thread = threading.Thread(target=update_thumbnail_images, args=(window, file_path), daemon=True)
+            thread.start()
 
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            # 找到棋盤格角點
-            ret, corners = cv2.findChessboardCorners(gray, (w, h), None)
-            image_with_marker = copy.deepcopy(image)
-            if ret:
-                # 在原角點的基礎上尋找亞像素角點
-                # cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-                # 追加進入世界三維點和平面二維點中
-                # objpoints.append(objp)
-                # imgpoints.append(corners)
-                # 將角點在圖像上顯示
-                cv2.drawChessboardCorners(image_with_marker, (w, h), corners, ret)
-            thumbnail_image_with_marker = imutils.resize(image_with_marker, width=thumbnail_size[0], height=thumbnail_size[1])
+        if event == 'update_thumbnail_images':
+            thumbnail_image, thumbnail_image_with_marker = values['update_thumbnail_images']
+            window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
             window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
 
         ret, frame = camera_looper.read()
