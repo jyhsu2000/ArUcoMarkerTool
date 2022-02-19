@@ -103,14 +103,8 @@ def main():
             calibration_image_filenames = os.listdir(calibration_images_path)
             selected_index = calibration_image_filenames.index(filename)
             window['listbox'].update(values=calibration_image_filenames, set_to_index=selected_index, scroll_to_index=selected_index)
-            # TODO: 自動選擇最新相片後，應模擬觸發事件
-
-            # Update thumbnail
-            # FIXME: 不該手動執行後續事件中的流程
-            thumbnail_image = Image.open(file_path)
-            thumbnail_image.thumbnail(thumbnail_size, Image.ANTIALIAS)
-            thumbnail_image = ImageTk.PhotoImage(thumbnail_image)
-            window['thumbnail'].update(data=thumbnail_image)
+            # Trigger listbox event
+            window.write_event_value('listbox', (filename,))
 
         # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
