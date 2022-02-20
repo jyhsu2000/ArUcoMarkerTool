@@ -29,13 +29,20 @@ objp[:, :2] = np.mgrid[0:w, 0:h].T.reshape(-1, 2)
 objp = objp * 18.1  # 18.1 mm
 
 
-def reload_calibration_image_df(window):
-    # FIXME: 會錯誤清除已存在的 chessboard 欄位資料
-    calibration_image_filenames = os.listdir(calibration_images_path)
-    calibration_image_df = pd.DataFrame({
-        'filename': calibration_image_filenames,
+def update_calibration_image_df(window, calibration_image_df: pd.DataFrame) -> pd.DataFrame:
+    # 取得檔案清單
+    new_calibration_image_filenames = os.listdir(calibration_images_path)
+    new_calibration_image_df = pd.DataFrame({
+        'filename': new_calibration_image_filenames,
         'chessboard': '',
     })
+    # 與原有的合併
+    calibration_image_df = pd.concat([calibration_image_df, new_calibration_image_df], axis='index')
+    # 若重複，則以原有的為主
+    calibration_image_df.drop_duplicates(subset=['filename'], keep='first', inplace=True)
+    # 清除檔案不存在的
+    calibration_image_df = calibration_image_df[calibration_image_df.filename.isin(new_calibration_image_filenames)]
+
     window['table'].update(values=calibration_image_df.values.tolist())
 
     return calibration_image_df
@@ -106,7 +113,7 @@ def main():
     camera_looper = CameraLooper(window)
 
     window.finalize()
-    calibration_image_df = reload_calibration_image_df(window)
+    calibration_image_df = update_calibration_image_df(window, calibration_image_df)
 
     recent_frame_count = 10
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
@@ -154,7 +161,7 @@ def main():
             selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
             file_path = os.path.join(calibration_images_path, selected_filename)
             os.remove(file_path)
-            calibration_image_df = reload_calibration_image_df(window)
+            calibration_image_df = update_calibration_image_df(window, calibration_image_df)
             window.write_event_value('table', [None])
 
         ret, frame = camera_looper.read()
@@ -169,7 +176,7 @@ def main():
             cv2.imwrite(file_path, frame)
 
             # Update file list
-            calibration_image_df = reload_calibration_image_df(window)
+            calibration_image_df = update_calibration_image_df(window, calibration_image_df)
             selected_index = calibration_image_df.filename.eq(filename).idxmax()
             window['table'].update(select_rows=[selected_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
             window['table'].Widget.see(selected_index + 1)
