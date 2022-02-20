@@ -60,10 +60,10 @@ def main():
         [
             sg.Column([
                 # TODO: 清單應顯示檔案編號及總數量
-                # TODO: 應有刪除功能
                 [sg.Listbox(values=calibration_image_filenames, key='listbox', size=(40, 10), expand_x=True, expand_y=True, enable_events=True)],
                 [sg.Image(filename='', key='thumbnail', size=(400, 1))],
                 [sg.Image(filename='', key='thumbnail_with_marker', size=(400, 1))],
+                [sg.Button('Delete selected image', key='delete_selected_image', enable_events=True, button_color=('white', 'red'), font='Helvetica 14', expand_x=True, disabled=True)]
             ], expand_y=True),
             sg.Image(filename='', key='image'),
         ],
@@ -89,24 +89,35 @@ def main():
             return
 
         if event == 'listbox':
-            file_path = os.path.join(calibration_images_path, values['listbox'][0])
-            thread = threading.Thread(target=update_thumbnail_images, args=(window, file_path), daemon=True)
-            thread.start()
+            selected_filename = values['listbox'][0]
+            if selected_filename:
+                file_path = os.path.join(calibration_images_path, selected_filename)
+                thread = threading.Thread(target=update_thumbnail_images, args=(window, file_path), daemon=True)
+                thread.start()
+                window['delete_selected_image'].update(disabled=False)
+            else:
+                window['thumbnail'].update(data=None)
+                window['thumbnail_with_marker'].update(data=None)
+                window['delete_selected_image'].update(disabled=True)
 
         if event == 'update_thumbnail_images':
             thumbnail_image, thumbnail_image_with_marker = values['update_thumbnail_images']
             window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
             window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
 
+        if event == 'delete_selected_image':
+            file_path = os.path.join(calibration_images_path, values['listbox'][0])
+            os.remove(file_path)
+            window['listbox'].update(values=os.listdir(calibration_images_path))
+            window.write_event_value('listbox', (None,))
+
         ret, frame = camera_looper.read()
         if not ret:
             continue
 
         if event == 'capture':
-            print('capture')
             filename = time.strftime('%Y%m%d_%H%M%S', time.localtime()) + '.jpg'
-            file_path = os.path.join(calibration_images_path, time.strftime('%Y%m%d_%H%M%S', time.localtime()) + '.jpg')
-            print(f'{file_path=}')
+            file_path = os.path.join(calibration_images_path, filename)
             if not os.path.exists(os.path.dirname(file_path)):
                 os.makedirs(os.path.dirname(file_path))
             cv2.imwrite(file_path, frame)
