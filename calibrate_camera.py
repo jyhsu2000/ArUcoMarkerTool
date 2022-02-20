@@ -147,7 +147,6 @@ def main():
                     sg.Button('Calibrate', key='calibrate', font='Helvetica 20', enable_events=True),
                     sg.ProgressBar(max_value=10, orientation='h', size=(20, 20), key='progress'),
                 ],
-
             ], expand_y=True),
             sg.Image(filename='', key='image'),
         ],
