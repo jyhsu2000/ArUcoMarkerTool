@@ -69,7 +69,7 @@ def detect_chessboard(window, filename, image=None):
         # 將角點在圖像上顯示
         cv2.drawChessboardCorners(image, (w, h), corners, ret)
 
-    return ret, corners, image,
+    return ret, corners, image, gray,
 
 
 def update_thumbnail_images(window, filename: str):
@@ -78,16 +78,39 @@ def update_thumbnail_images(window, filename: str):
     thumbnail_image = imutils.resize(image, width=thumbnail_size[0], height=thumbnail_size[1])
     window.write_event_value('update_thumbnail_image', thumbnail_image)
 
-    ret, corners, image_with_marker = detect_chessboard(window, filename, image)
+    ret, corners, image_with_marker, gray = detect_chessboard(window, filename, image)
     thumbnail_image_with_marker = imutils.resize(image_with_marker, width=thumbnail_size[0], height=thumbnail_size[1])
     window.write_event_value('update_thumbnail_image_with_marker', thumbnail_image_with_marker)
 
 
 def calibrate(window, calibration_image_df: pd.DataFrame):
     window.write_event_value('update_calibrate_disabled', True)
-    # TODO
-    for i in range(10):
-        window.write_event_value('update_progress', (i, 10))
+    row_count = len(calibration_image_df)
+
+    # 儲存棋盤格角點的世界坐標和圖像坐標對
+    obj_points = []  # 在世界坐標系中的三維點
+    img_points = []  # 在圖像平面的二維點
+
+    for idx, row in calibration_image_df.iterrows():
+        window.write_event_value('update_progress', (idx + 1, row_count))
+        ret, corners, image_with_marker, gray = detect_chessboard(window, row['filename'])
+        if ret:
+            # 追加進入世界三維點和平面二維點中
+            obj_points.append(objp)
+            img_points.append(corners)
+    ret, camera_matrix, distortion_coefficients, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None, None)
+    print('ret:', ret)
+    print('camera_matrix:\n', camera_matrix)  # 內參數矩陣
+    print('distortion_coefficients 畸變係數:\n', distortion_coefficients)  # 畸變係數   distortion coefficients = (k_1,k_2,p_1,p_2,k_3)
+    print('rvecs 旋轉（向量）外參:\n', rvecs)  # 旋轉向量  # 外參數
+    print('tvecs 平移（向量）外參:\n', tvecs)  # 平移向量  # 外參數
+    # TODO: 儲存參數
+    u, v = image_with_marker.shape[:2]
+
+    # TODO: 這步驟應該是針對新拍的照相，而非校正過程使用？
+    new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion_coefficients, (u, v), 0, (u, v))
+    print('new_camera_mtx 外參:\n', new_camera_mtx)
+    print('roi:\n', roi)
 
     window.write_event_value('update_calibrate_disabled', False)
 
