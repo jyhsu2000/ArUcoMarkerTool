@@ -149,3 +149,28 @@ def eat_events(window):
         if event == '__TIMEOUT__':
             break
     return
+
+
+def eat_next_event(window, event_name: str):
+    """
+    Simple, elegant fix
+    "Eats" extra events created from updating tables.  Call it right after doing the update operation.
+    Will eat however many events are created, fixing the issue where different platforms may create a different number of events.
+    @see https://github.com/PySimpleGUI/PySimpleGUI/issues/4268#issuecomment-843423532
+    """
+    event_queue = []
+    while True:
+        event, values = window.read(timeout=0)
+        if event == event_name:
+            break
+        if event == '__TIMEOUT__':
+            break
+
+        # Queue other events for later
+        event_queue.append((event, values[event]))
+
+    # Write events back for main loop
+    for event, value in event_queue:
+        window.write_event_value(event, value)
+
+    return

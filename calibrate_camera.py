@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image, ImageTk
 
-from utils import CameraLooper, eat_events
+from utils import CameraLooper, eat_next_event
 
 calibration_images_path = './calibration_images'
 thumbnail_size = (400, 300)
@@ -139,7 +139,7 @@ def main():
                 selected_row_index = None
             if selected_row_index is not None:
                 window['table'].update(select_rows=[selected_row_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
-                eat_events(window)  # 消除前述錯誤觸發的事件
+                eat_next_event(window, 'table')  # 消除前述錯誤觸發的事件
 
         if event == 'update_thumbnail_image':
             thumbnail_image = values['update_thumbnail_image']
@@ -155,7 +155,7 @@ def main():
             file_path = os.path.join(calibration_images_path, selected_filename)
             os.remove(file_path)
             calibration_image_df = reload_calibration_image_df(window)
-            window.write_event_value('table', (None,))
+            window.write_event_value('table', [None])
 
         ret, frame = camera_looper.read()
         if not ret:
@@ -173,7 +173,7 @@ def main():
             selected_index = calibration_image_df.filename.eq(filename).idxmax()
             window['table'].update(select_rows=[selected_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
             window['table'].Widget.see(selected_index + 1)
-            eat_events(window)  # 消除前述錯誤觸發的事件
+            eat_next_event(window, 'table')  # 消除前述錯誤觸發的事件
             window.write_event_value('table', [selected_index])
 
         # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
