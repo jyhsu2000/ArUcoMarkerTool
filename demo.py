@@ -3,6 +3,7 @@ import time
 from collections import deque
 
 import PySimpleGUI as sg
+import cv2
 import cv2.aruco as aruco
 import numpy as np
 from PIL import Image, ImageTk
@@ -86,6 +87,20 @@ def main():
         ret, frame = camera_looper.read()
         if not ret:
             continue
+
+        # 畸變修正
+        h, w = frame.shape[:2]
+        new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion_coefficients, (w, h), 0, (w, h))
+        # 以下兩種方案皆可達到相同效果
+        # @see https://opencv24-python-tutorials.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html#undistortion
+        # 方案一：undistort
+        frame = cv2.undistort(frame, camera_matrix, distortion_coefficients, None, new_camera_mtx)
+        # 方案二：initUndistortRectifyMap
+        # map_x, map_y = cv2.initUndistortRectifyMap(camera_matrix, distortion_coefficients, None, new_camera_mtx, (w, h), 5)
+        # frame = cv2.remap(frame, map_x, map_y, cv2.INTER_LINEAR)
+        # 裁剪 ROI
+        x, y, w, h = roi
+        frame = frame[y:y + h, x:x + w]
 
         aruco_dict = aruco.Dictionary_get(selected_aruco_dict)
         aruco_params = aruco.DetectorParameters_create()
