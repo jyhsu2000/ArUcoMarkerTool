@@ -174,3 +174,26 @@ def eat_next_event(window, event_name: str):
         window.write_event_value(event, value)
 
     return
+
+
+def save_coefficients(camera_matrix, distortion_coefficients, path='camera.yml'):
+    """ Save the camera matrix and the distortion coefficients to given path/file. """
+    cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_WRITE)
+    cv_file.write('camera_matrix', camera_matrix)
+    cv_file.write('distortion_coefficients', distortion_coefficients)
+    # note you *release* you don't close() a FileStorage object
+    cv_file.release()
+
+
+def load_coefficients(path='camera.yml'):
+    """ Loads camera matrix and distortion coefficients. """
+    # FILE_STORAGE_READ
+    cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_READ)
+
+    # note we also have to specify the type to retrieve other wise we only get a
+    # FileNode object back instead of a matrix
+    camera_matrix = cv_file.getNode('camera_matrix').mat()
+    distortion_coefficients = cv_file.getNode('distortion_coefficients').mat()
+
+    cv_file.release()
+    return [camera_matrix, distortion_coefficients]

@@ -8,7 +8,7 @@ import cv2.aruco as aruco
 import numpy as np
 from PIL import Image, ImageTk
 
-from utils import CameraLooper, embed_img, create_text_pad
+from utils import CameraLooper, embed_img, create_text_pad, load_coefficients
 
 ARUCO_DICT = {
     "DICT_4X4_50": aruco.DICT_4X4_50,
@@ -67,10 +67,18 @@ def main():
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
 
     # 鏡頭校準相關參數，暫時先寫死
-    camera_matrix = np.array([[2000., 0., 720 / 2.],
-                              [0., 2000., 1280 / 2.],
-                              [0., 0., 1.]])
-    distortion_coefficients = np.array([0., 0., 0., 0., 0.])
+    camera_matrix, distortion_coefficients = load_coefficients()
+    if camera_matrix is None:
+        print('No "camera_matrix" in camera.yml. Use default value.')
+        camera_matrix = np.array([[2000., 0., 720 / 2.],
+                                  [0., 2000., 1280 / 2.],
+                                  [0., 0., 1.]])
+    if distortion_coefficients is None:
+        print('No "distortion_coefficients" in camera.yml. Use default value.')
+        distortion_coefficients = np.array([0., 0., 0., 0., 0.])
+
+    print('camera_matrix:\n', camera_matrix)
+    print('distortion_coefficients:\n', distortion_coefficients)
 
     while True:
         event, values = window.read(timeout=0)

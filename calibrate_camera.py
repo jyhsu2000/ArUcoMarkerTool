@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image, ImageTk
 
-from utils import CameraLooper, eat_next_event
+from utils import CameraLooper, eat_next_event, save_coefficients
 
 calibration_images_path = './calibration_images'
 thumbnail_size = (400, 300)
@@ -112,7 +112,8 @@ def calibrate(window, calibration_image_df: pd.DataFrame):
     print('distortion_coefficients 畸變係數:\n', distortion_coefficients)  # 畸變係數   distortion coefficients = (k_1,k_2,p_1,p_2,k_3)
     print('rvecs 旋轉（向量）外參:\n', rvecs)  # 旋轉向量  # 外參數
     print('tvecs 平移（向量）外參:\n', tvecs)  # 平移向量  # 外參數
-    # TODO: 儲存參數
+    # 儲存參數
+    save_coefficients(camera_matrix, distortion_coefficients)
 
     window.write_event_value('calibrate_finished', None)
 
