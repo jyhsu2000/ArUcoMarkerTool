@@ -115,7 +115,7 @@ def calibrate(window, calibration_image_df: pd.DataFrame):
     # 儲存參數
     save_coefficients(camera_matrix, distortion_coefficients)
 
-    window.write_event_value('calibrate_finished', None)
+    window.write_event_value('calibrate_finished', 'Calibration finished.\nCoefficients saved to camera.yml')
 
 
 def main():
@@ -223,10 +223,7 @@ def main():
         if event == 'calibrate_finished':
             window['progress'].update_bar(1, max=1)
             custom_message = values['calibrate_finished']
-            if custom_message:
-                sg.popup(custom_message)
-            else:
-                sg.popup('Calibration finished')
+            sg.popup(custom_message)
             window['calibrate'].update(disabled=False)
 
         if event == 'update_progress':
