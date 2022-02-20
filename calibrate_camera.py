@@ -87,7 +87,6 @@ def update_thumbnail_images(window, filename: str):
 
 
 def calibrate(window, calibration_image_df: pd.DataFrame):
-    window.write_event_value('update_calibrate_disabled', True)
     row_count = len(calibration_image_df)
 
     # 儲存棋盤格角點的世界坐標和圖像坐標對
@@ -101,6 +100,11 @@ def calibrate(window, calibration_image_df: pd.DataFrame):
             # 追加進入世界三維點和平面二維點中
             obj_points.append(objp)
             img_points.append(corners)
+
+    if len(img_points) == 0:
+        window.write_event_value('calibrate_finished', 'No chessboard images found')
+        return
+
     ret, camera_matrix, distortion_coefficients, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None, None)
     print('ret:', ret)
     print('camera_matrix:\n', camera_matrix)  # 內參數矩陣
@@ -108,14 +112,8 @@ def calibrate(window, calibration_image_df: pd.DataFrame):
     print('rvecs 旋轉（向量）外參:\n', rvecs)  # 旋轉向量  # 外參數
     print('tvecs 平移（向量）外參:\n', tvecs)  # 平移向量  # 外參數
     # TODO: 儲存參數
-    u, v = image_with_marker.shape[:2]
 
-    # TODO: 這步驟應該是針對新拍的照相，而非校正過程使用？
-    new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion_coefficients, (u, v), 0, (u, v))
-    print('new_camera_mtx 外參:\n', new_camera_mtx)
-    print('roi:\n', roi)
-
-    window.write_event_value('update_calibrate_disabled', False)
+    window.write_event_value('calibrate_finished', None)
 
 
 def main():
@@ -216,12 +214,18 @@ def main():
             window.write_event_value('table', [None])
 
         if event == 'calibrate':
+            window['calibrate'].update(disabled=True)
             thread = threading.Thread(target=calibrate, args=(window, calibration_image_df), daemon=True)
             thread.start()
 
-        if event == 'update_calibrate_disabled':
-            calibrate_disabled = values['update_calibrate_disabled']
-            window['calibrate'].update(disabled=calibrate_disabled)
+        if event == 'calibrate_finished':
+            window['progress'].update_bar(1, max=1)
+            custom_message = values['calibrate_finished']
+            if custom_message:
+                sg.popup(custom_message)
+            else:
+                sg.popup('Calibration finished')
+            window['calibrate'].update(disabled=False)
 
         if event == 'update_progress':
             current_count, max_value = values['update_progress']
