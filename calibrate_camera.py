@@ -49,17 +49,17 @@ def update_calibration_image_df(window, calibration_image_df: pd.DataFrame) -> p
     return calibration_image_df
 
 
-def update_thumbnail_images(window, filename: str):
-    file_path = os.path.join(calibration_images_path, filename)
-    image = cv2.imread(file_path)
-    thumbnail_image = imutils.resize(image, width=thumbnail_size[0], height=thumbnail_size[1])
-    window.write_event_value('update_thumbnail_image', thumbnail_image)
+def detect_chessboard(window, filename, image=None):
+    if image is None:
+        file_path = os.path.join(calibration_images_path, filename)
+        image = cv2.imread(file_path)
+    else:
+        image = copy.deepcopy(image)
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # 找到棋盤格角點
     ret, corners = cv2.findChessboardCorners(gray, (w, h), None)
     window.write_event_value('update_chessboard_detect_result', (filename, ret))
-    image_with_marker = copy.deepcopy(image)
     if ret:
         # 在原角點的基礎上尋找亞像素角點
         cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
@@ -67,7 +67,18 @@ def update_thumbnail_images(window, filename: str):
         # objpoints.append(objp)
         # imgpoints.append(corners)
         # 將角點在圖像上顯示
-        cv2.drawChessboardCorners(image_with_marker, (w, h), corners, ret)
+        cv2.drawChessboardCorners(image, (w, h), corners, ret)
+
+    return ret, corners, image,
+
+
+def update_thumbnail_images(window, filename: str):
+    file_path = os.path.join(calibration_images_path, filename)
+    image = cv2.imread(file_path)
+    thumbnail_image = imutils.resize(image, width=thumbnail_size[0], height=thumbnail_size[1])
+    window.write_event_value('update_thumbnail_image', thumbnail_image)
+
+    ret, corners, image_with_marker = detect_chessboard(window, filename, image)
     thumbnail_image_with_marker = imutils.resize(image_with_marker, width=thumbnail_size[0], height=thumbnail_size[1])
     window.write_event_value('update_thumbnail_image_with_marker', thumbnail_image_with_marker)
 
