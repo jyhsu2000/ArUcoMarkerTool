@@ -125,7 +125,6 @@ def main():
             return
 
         if event == 'table':
-            print(f'{values["table"]=}')
             selected_row_index = values["table"][0]
             if selected_row_index is not None:
                 selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
