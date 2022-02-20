@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image, ImageTk
 
-from utils import CameraLooper
+from utils import CameraLooper, eat_events
 
 calibration_images_path = './calibration_images'
 thumbnail_size = (400, 300)
@@ -30,6 +30,7 @@ objp = objp * 18.1  # 18.1 mm
 
 
 def reload_calibration_image_df(window):
+    # FIXME: 會錯誤清除已存在的 chessboard 欄位資料
     calibration_image_filenames = os.listdir(calibration_images_path)
     calibration_image_df = pd.DataFrame({
         'filename': calibration_image_filenames,
@@ -49,6 +50,7 @@ def update_thumbnail_images(window, filename: str):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # 找到棋盤格角點
     ret, corners = cv2.findChessboardCorners(gray, (w, h), None)
+    window.write_event_value('update_chessboard_detect_result', (filename, ret))
     image_with_marker = copy.deepcopy(image)
     if ret:
         # 在原角點的基礎上尋找亞像素角點
@@ -115,6 +117,7 @@ def main():
             return
 
         if event == 'table':
+            print(f'{values["table"]=}')
             selected_row_index = values["table"][0]
             if selected_row_index is not None:
                 selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
@@ -125,6 +128,18 @@ def main():
                 window['thumbnail'].update(source=None)
                 window['thumbnail_with_marker'].update(source=None)
                 window['delete_selected_image'].update(disabled=True)
+
+        if event == 'update_chessboard_detect_result':
+            filename, ret = values['update_chessboard_detect_result']
+            calibration_image_df.loc[calibration_image_df.filename == filename, 'chessboard'] = ret
+            window['table'].update(values=calibration_image_df.values.tolist())
+            try:
+                selected_row_index = values["table"][0]
+            except:
+                selected_row_index = None
+            if selected_row_index is not None:
+                window['table'].update(select_rows=[selected_row_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
+                eat_events(window)  # 消除前述錯誤觸發的事件
 
         if event == 'update_thumbnail_image':
             thumbnail_image = values['update_thumbnail_image']
@@ -156,9 +171,10 @@ def main():
             # Update file list
             calibration_image_df = reload_calibration_image_df(window)
             selected_index = calibration_image_df.filename.eq(filename).idxmax()
-            window['table'].update(select_rows=[selected_index])
+            window['table'].update(select_rows=[selected_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
             window['table'].Widget.see(selected_index + 1)
-            window.write_event_value('table', (selected_index,))
+            eat_events(window)  # 消除前述錯誤觸發的事件
+            window.write_event_value('table', [selected_index])
 
         # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
