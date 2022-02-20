@@ -31,7 +31,10 @@ objp = objp * 18.1  # 18.1 mm
 
 def update_calibration_image_df(window, calibration_image_df: pd.DataFrame) -> pd.DataFrame:
     # 取得檔案清單
-    new_calibration_image_filenames = os.listdir(calibration_images_path)
+    try:
+        new_calibration_image_filenames = os.listdir(calibration_images_path)
+    except:
+        new_calibration_image_filenames = []
     new_calibration_image_df = pd.DataFrame({
         'filename': new_calibration_image_filenames,
         'chessboard': '',
