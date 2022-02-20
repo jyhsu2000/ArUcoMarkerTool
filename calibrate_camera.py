@@ -26,7 +26,8 @@ h = 6  # 7  - 1
 # 世界坐標系中的棋盤格點,例如(0,0,0), (1,0,0), (2,0,0) ....,(8,5,0)，去掉Z坐標，記為二維矩陣
 objp = np.zeros((w * h, 3), np.float32)
 objp[:, :2] = np.mgrid[0:w, 0:h].T.reshape(-1, 2)
-objp = objp * 18.1  # 18.1 mm
+square_size_mm = 18.1
+objp = objp * square_size_mm
 
 
 def update_calibration_image_df(window, calibration_image_df: pd.DataFrame) -> pd.DataFrame:
