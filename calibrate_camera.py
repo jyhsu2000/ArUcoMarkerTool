@@ -9,6 +9,7 @@ import PySimpleGUI as sg
 import cv2
 import imutils
 import numpy as np
+import pandas as pd
 from PIL import Image, ImageTk
 
 from utils import CameraLooper
@@ -26,6 +27,17 @@ h = 6  # 7  - 1
 objp = np.zeros((w * h, 3), np.float32)
 objp[:, :2] = np.mgrid[0:w, 0:h].T.reshape(-1, 2)
 objp = objp * 18.1  # 18.1 mm
+
+
+def reload_calibration_image_df(window):
+    calibration_image_filenames = os.listdir(calibration_images_path)
+    calibration_image_df = pd.DataFrame({
+        'filename': calibration_image_filenames,
+        'chessboard': '',
+    })
+    window['table'].update(values=calibration_image_df.values.tolist())
+
+    return calibration_image_df
 
 
 def update_thumbnail_images(window, file_path: str):
@@ -51,7 +63,10 @@ def update_thumbnail_images(window, file_path: str):
 
 
 def main():
-    calibration_image_filenames = os.listdir(calibration_images_path)
+    calibration_image_df = pd.DataFrame({
+        'filename': [],
+        'chessboard': '',
+    })
 
     sg.theme('DefaultNoMoreNagging')
 
@@ -59,8 +74,16 @@ def main():
         [sg.Text('CalibrateCamera', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
         [
             sg.Column([
-                # TODO: 清單應顯示檔案編號及總數量
-                [sg.Listbox(values=calibration_image_filenames, key='listbox', size=(40, 10), expand_x=True, expand_y=True, enable_events=True)],
+                [sg.Table(
+                    values=calibration_image_df.values.tolist(),
+                    headings=calibration_image_df.columns.tolist(),
+                    auto_size_columns=False,
+                    display_row_numbers=True,
+                    justification='left',
+                    col_widths=[30, 10],
+                    num_rows=10,
+                    key='table', expand_x=False, expand_y=False, enable_events=True
+                )],
                 [sg.Image(filename='', key='thumbnail', size=(400, 1))],
                 [sg.Image(filename='', key='thumbnail_with_marker', size=(400, 1))],
                 [sg.Button('Delete selected image', key='delete_selected_image', enable_events=True, button_color=('white', 'red'), font='Helvetica 14', expand_x=True, disabled=True)]
@@ -80,6 +103,9 @@ def main():
 
     camera_looper = CameraLooper(window)
 
+    window.finalize()
+    calibration_image_df = reload_calibration_image_df(window)
+
     recent_frame_count = 10
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
 
@@ -88,16 +114,17 @@ def main():
         if event == sg.WIN_CLOSED:
             return
 
-        if event == 'listbox':
-            selected_filename = values['listbox'][0]
-            if selected_filename:
+        if event == 'table':
+            selected_row_index = values["table"][0]
+            if selected_row_index is not None:
+                selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
                 file_path = os.path.join(calibration_images_path, selected_filename)
                 thread = threading.Thread(target=update_thumbnail_images, args=(window, file_path), daemon=True)
                 thread.start()
                 window['delete_selected_image'].update(disabled=False)
             else:
-                window['thumbnail'].update(data=None)
-                window['thumbnail_with_marker'].update(data=None)
+                window['thumbnail'].update(source=None)
+                window['thumbnail_with_marker'].update(source=None)
                 window['delete_selected_image'].update(disabled=True)
 
         if event == 'update_thumbnail_images':
@@ -106,10 +133,12 @@ def main():
             window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
 
         if event == 'delete_selected_image':
-            file_path = os.path.join(calibration_images_path, values['listbox'][0])
+            selected_row_index = values["table"][0]
+            selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
+            file_path = os.path.join(calibration_images_path, selected_filename)
             os.remove(file_path)
-            window['listbox'].update(values=os.listdir(calibration_images_path))
-            window.write_event_value('listbox', (None,))
+            calibration_image_df = reload_calibration_image_df(window)
+            window.write_event_value('table', (None,))
 
         ret, frame = camera_looper.read()
         if not ret:
@@ -123,11 +152,11 @@ def main():
             cv2.imwrite(file_path, frame)
 
             # Update file list
-            calibration_image_filenames = os.listdir(calibration_images_path)
-            selected_index = calibration_image_filenames.index(filename)
-            window['listbox'].update(values=calibration_image_filenames, set_to_index=selected_index, scroll_to_index=selected_index)
-            # Trigger listbox event
-            window.write_event_value('listbox', (filename,))
+            calibration_image_df = reload_calibration_image_df(window)
+            selected_index = calibration_image_df.filename.eq(filename).idxmax()
+            window['table'].update(select_rows=[selected_index])
+            window['table'].Widget.see(selected_index + 1)
+            window.write_event_value('table', (selected_index,))
 
         # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
