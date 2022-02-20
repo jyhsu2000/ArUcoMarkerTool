@@ -72,6 +72,15 @@ def update_thumbnail_images(window, filename: str):
     window.write_event_value('update_thumbnail_image_with_marker', thumbnail_image_with_marker)
 
 
+def calibrate(window, calibration_image_df: pd.DataFrame):
+    window.write_event_value('update_calibrate_disabled', True)
+    # TODO
+    for i in range(10):
+        window.write_event_value('update_progress', (i, 10))
+
+    window.write_event_value('update_calibrate_disabled', False)
+
+
 def main():
     calibration_image_df = pd.DataFrame({
         'filename': [],
@@ -96,7 +105,12 @@ def main():
                 )],
                 [sg.Image(filename='', key='thumbnail', size=(400, 1))],
                 [sg.Image(filename='', key='thumbnail_with_marker', size=(400, 1))],
-                [sg.Button('Delete selected image', key='delete_selected_image', enable_events=True, button_color=('white', 'red'), font='Helvetica 14', expand_x=True, disabled=True)]
+                [sg.Button('Delete selected image', key='delete_selected_image', enable_events=True, button_color=('white', 'red'), font='Helvetica 14', expand_x=True, disabled=True)],
+                [
+                    sg.Button('Calibrate', key='calibrate', font='Helvetica 20', enable_events=True),
+                    sg.ProgressBar(max_value=10, orientation='h', size=(20, 20), key='progress'),
+                ],
+
             ], expand_y=True),
             sg.Image(filename='', key='image'),
         ],
@@ -163,6 +177,18 @@ def main():
             os.remove(file_path)
             calibration_image_df = update_calibration_image_df(window, calibration_image_df)
             window.write_event_value('table', [None])
+
+        if event == 'calibrate':
+            thread = threading.Thread(target=calibrate, args=(window, calibration_image_df), daemon=True)
+            thread.start()
+
+        if event == 'update_calibrate_disabled':
+            calibrate_disabled = values['update_calibrate_disabled']
+            window['calibrate'].update(disabled=calibrate_disabled)
+
+        if event == 'update_progress':
+            current_count, max_value = values['update_progress']
+            window['progress'].update_bar(current_count, max=max_value)
 
         ret, frame = camera_looper.read()
         if not ret:
