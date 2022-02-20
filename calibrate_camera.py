@@ -40,10 +40,11 @@ def reload_calibration_image_df(window):
     return calibration_image_df
 
 
-def update_thumbnail_images(window, file_path: str):
+def update_thumbnail_images(window, filename: str):
+    file_path = os.path.join(calibration_images_path, filename)
     image = cv2.imread(file_path)
     thumbnail_image = imutils.resize(image, width=thumbnail_size[0], height=thumbnail_size[1])
-    # window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
+    window.write_event_value('update_thumbnail_image', thumbnail_image)
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # 找到棋盤格角點
@@ -58,8 +59,7 @@ def update_thumbnail_images(window, file_path: str):
         # 將角點在圖像上顯示
         cv2.drawChessboardCorners(image_with_marker, (w, h), corners, ret)
     thumbnail_image_with_marker = imutils.resize(image_with_marker, width=thumbnail_size[0], height=thumbnail_size[1])
-    # window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
-    window.write_event_value('update_thumbnail_images', (thumbnail_image, thumbnail_image_with_marker))
+    window.write_event_value('update_thumbnail_image_with_marker', thumbnail_image_with_marker)
 
 
 def main():
@@ -118,8 +118,7 @@ def main():
             selected_row_index = values["table"][0]
             if selected_row_index is not None:
                 selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
-                file_path = os.path.join(calibration_images_path, selected_filename)
-                thread = threading.Thread(target=update_thumbnail_images, args=(window, file_path), daemon=True)
+                thread = threading.Thread(target=update_thumbnail_images, args=(window, selected_filename), daemon=True)
                 thread.start()
                 window['delete_selected_image'].update(disabled=False)
             else:
@@ -127,9 +126,12 @@ def main():
                 window['thumbnail_with_marker'].update(source=None)
                 window['delete_selected_image'].update(disabled=True)
 
-        if event == 'update_thumbnail_images':
-            thumbnail_image, thumbnail_image_with_marker = values['update_thumbnail_images']
+        if event == 'update_thumbnail_image':
+            thumbnail_image = values['update_thumbnail_image']
             window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
+
+        if event == 'update_thumbnail_image_with_marker':
+            thumbnail_image_with_marker = values['update_thumbnail_image_with_marker']
             window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
 
         if event == 'delete_selected_image':
