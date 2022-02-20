@@ -135,3 +135,17 @@ def create_text_pad(text: str = 'Text', text_color=(0, 255, 255), bg_color=(255,
     text_pad = cv2.putText(text_pad, text, (5, h + 15), font, text_scale, text_color, thickness)
 
     return text_pad
+
+
+def eat_events(window):
+    """
+    Simple, elegant fix
+    "Eats" extra events created from updating tables.  Call it right after doing the update operation.
+    Will eat however many events are created, fixing the issue where different platforms may create a different number of events.
+    @see https://github.com/PySimpleGUI/PySimpleGUI/issues/4268#issuecomment-843423532
+    """
+    while True:
+        event, values = window.read(timeout=0)
+        if event == '__TIMEOUT__':
+            break
+    return
