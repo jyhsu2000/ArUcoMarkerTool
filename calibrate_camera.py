@@ -42,6 +42,7 @@ def update_calibration_image_df(window, calibration_image_df: pd.DataFrame) -> p
     calibration_image_df.drop_duplicates(subset=['filename'], keep='first', inplace=True)
     # 清除檔案不存在的
     calibration_image_df = calibration_image_df[calibration_image_df.filename.isin(new_calibration_image_filenames)]
+    calibration_image_df.reset_index(drop=True, inplace=True)
 
     window['table'].update(values=calibration_image_df.values.tolist())
 
