@@ -72,8 +72,8 @@ def main():
     camera_matrix, distortion_coefficients = load_coefficients()
     if camera_matrix is None:
         print('No "camera_matrix" in camera.yml. Use default value.')
-        camera_matrix = np.array([[2000., 0., 720 / 2.],
-                                  [0., 2000., 1280 / 2.],
+        camera_matrix = np.array([[2000., 0., 1280 / 2.],
+                                  [0., 2000., 720 / 2.],
                                   [0., 0., 1.]])
     if distortion_coefficients is None:
         print('No "distortion_coefficients" in camera.yml. Use default value.')
