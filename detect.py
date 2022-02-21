@@ -39,7 +39,7 @@ def main():
     sg.theme('DefaultNoMoreNagging')
 
     layout = [
-        [sg.Text('ArUcoMarkerDemo', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
+        [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
         [sg.Image(filename='', key='image')],
         [
             sg.Text('ArUco Dictionary:'),
@@ -56,7 +56,7 @@ def main():
         ],
     ]
 
-    window = sg.Window('ArUcoMarkerDemo', layout, location=(100, 100))
+    window = sg.Window('ArUcoMarkerDetection', layout, location=(100, 100))
 
     camera_looper = CameraLooper(window)
 
