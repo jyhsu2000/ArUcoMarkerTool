@@ -27,4 +27,5 @@ Realtime ArUco marker detection demo
 
 ## Screenshot
 
-![](images/screenshot.png)
+![](images/screenshot_calibrate_camera.png)
+![](images/screenshot_detect.png)
