@@ -23,7 +23,7 @@ Realtime ArUco marker detection demo
     python detect.py
     ```
 2. Choose `ArUco Dictionary`
-3. Aim the lens on the ArUco marker.
+3. Aim the lens on the ArUco markers.
 
 ## Screenshot
 
