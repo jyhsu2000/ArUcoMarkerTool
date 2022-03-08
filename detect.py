@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import time
 from collections import deque
+import math
 
 import PySimpleGUI as sg
 import cv2
@@ -47,6 +48,7 @@ def main():
                      default_value='DICT_ARUCO_ORIGINAL', enable_events=True),
             sg.Checkbox('Draw custom marker', key='draw_custom_marker', enable_events=True, default=True),
             sg.Checkbox('Draw axis', key='draw_axis', enable_events=True, default=False),
+            sg.Checkbox('Draw distance', key='draw_distance', enable_events=True, default=False),
             sg.Checkbox('Undistortion', key='undistortion', enable_events=True, default=True),
         ],
         [
@@ -63,6 +65,7 @@ def main():
     selected_aruco_dict = ARUCO_DICT['DICT_ARUCO_ORIGINAL']
     draw_custom_marker = True
     draw_axis = False
+    distance_text = False
     undistortion = True
 
     recent_frame_count = 10
@@ -93,6 +96,8 @@ def main():
             draw_custom_marker = values['draw_custom_marker']
         if event == 'draw_axis':
             draw_axis = values['draw_axis']
+        if event == 'draw_distance':
+            distance_text = values['draw_distance']
         if event == 'undistortion':
             undistortion = values['undistortion']
 
@@ -133,7 +138,7 @@ def main():
                 # extract the marker corners (which are always returned in top-left, top-right, bottom-right, and bottom-left order)
                 corners = markerCorner.reshape((4, 2))
                 (top_left, top_right, bottom_right, bottom_left) = corners
-                # convert each of the (x, y)-coordinate pairs to integers
+                # convert each of the (x, y)-coordinate pairns to integers
                 top_right = (int(top_right[0]), int(top_right[1]))
                 bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
                 bottom_left = (int(bottom_left[0]), int(bottom_left[1]))
@@ -163,6 +168,32 @@ def main():
                 if draw_axis:
                     rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
                     aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rvec, tvec, 0.01)
+
+                if distance_text:
+                    rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
+                    #計算角度
+                    deg = rvec[0][0][2] * 180 / np.pi
+                    R=np.zeros((3,3),dtype=np.float64)
+                    cv2.Rodrigues(rvec,R)
+                    sy=math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+                    singular=sy< 1e-6
+                    if not singular:#偏航，俯仰，滾動
+                        x = math.atan2(R[2, 1], R[2, 2])
+                        y = math.atan2(-R[2, 0], sy)
+                        z = math.atan2(R[1, 0], R[0, 0])
+                    else:
+                        x = math.atan2(-R[1, 2], R[1, 1])
+                        y = math.atan2(-R[2, 0], sy)
+                        z = 0
+                    # 偏航，俯仰，滾動换成角度
+                    rx = x * 180.0 / 3.141592653589793
+                    ry = y * 180.0 / 3.141592653589793
+                    rz = z * 180.0 / 3.141592653589793
+
+                    #計算距離
+                    distance = ((tvec[0][0][2] + 0.02) * 0.0254) * 100
+                    print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID,rx,ry,rz,distance))
+
 
         # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))

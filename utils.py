@@ -44,10 +44,10 @@ class Camera(metaclass=Singleton):
     @synchronized
     def connect(self):
         print('Camera connecting...')
-        self.camera = cv2.VideoCapture(0)
+        self.camera = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
         print('VideoCapture created')
-        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
         self.camera.set(cv2.CAP_PROP_FPS, 60)
         width = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
