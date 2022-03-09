@@ -40,9 +40,26 @@ ARUCO_DICT = {
 def main():
     sg.theme('DefaultNoMoreNagging')
 
+    empty_detected_marker_df = pd.DataFrame(columns=['marker_id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '距離(distance)'])
+
     layout = [
         [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
-        [sg.Image(filename='', key='image')],
+        [
+            sg.Image(filename='', key='image'),
+            sg.Table(
+                values=empty_detected_marker_df.values.tolist(),
+                headings=empty_detected_marker_df.columns.tolist(),
+                auto_size_columns=False,
+                display_row_numbers=False,
+                justification='left',
+                # col_widths=[30, 10],
+                # num_rows=10,
+                key='detected_marker_table',
+                expand_x=True,
+                expand_y=True,
+                enable_events=True,
+            )
+        ],
         [
             sg.Text('ArUco Dictionary:'),
             sg.Combo(values=list(ARUCO_DICT.keys()), key='dict_select', readonly=True, size=(40, 1),
@@ -134,6 +151,7 @@ def main():
             if not draw_custom_marker:
                 aruco.drawDetectedMarkers(frame, corners, ids)
 
+            detected_markers = []
             # loop over the detected ArUCo corners
             for (markerCorner, markerID) in zip(corners, ids):
                 # extract the marker corners (which are always returned in top-left, top-right, bottom-right, and bottom-left order)
@@ -193,8 +211,21 @@ def main():
 
                     # 計算距離
                     distance = ((tvec[0][0][2] + 0.02) * 0.0254) * 100
-                    print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID,rx,ry,rz,distance))
-
+                    # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
+                    detected_markers.append(pd.DataFrame({
+                        'marker_id': markerID,
+                        '偏航(yaw)': round(rx),
+                        '俯仰(pitch)': round(ry),
+                        '滾動(roll)': round(rz),
+                        '距離(distance)': round(distance, 2),
+                    }, index=[0]))
+            if detected_markers:
+                detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['marker_id'])
+            else:
+                detected_marker_df = empty_detected_marker_df
+            window['detected_marker_table'].update(values=detected_marker_df.values.tolist())
+        else:
+            window['detected_marker_table'].update(values=empty_detected_marker_df.values.tolist())
 
         # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
         img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
