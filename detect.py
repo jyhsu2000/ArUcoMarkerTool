@@ -1,12 +1,13 @@
 #!/usr/bin/env python
+import math
 import time
 from collections import deque
-import math
 
 import PySimpleGUI as sg
 import cv2
 import cv2.aruco as aruco
 import numpy as np
+import pandas as pd
 from PIL import Image, ImageTk
 
 from utils import CameraLooper, embed_img, create_text_pad, load_coefficients
@@ -171,13 +172,13 @@ def main():
 
                 if distance_text:
                     rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
-                    #計算角度
+                    # 計算角度
                     deg = rvec[0][0][2] * 180 / np.pi
-                    R=np.zeros((3,3),dtype=np.float64)
-                    cv2.Rodrigues(rvec,R)
-                    sy=math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
-                    singular=sy< 1e-6
-                    if not singular:#偏航，俯仰，滾動
+                    R = np.zeros((3, 3), dtype=np.float64)
+                    cv2.Rodrigues(rvec, R)
+                    sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
+                    singular = sy < 1e-6
+                    if not singular:  # 偏航，俯仰，滾動
                         x = math.atan2(R[2, 1], R[2, 2])
                         y = math.atan2(-R[2, 0], sy)
                         z = math.atan2(R[1, 0], R[0, 0])
@@ -190,7 +191,7 @@ def main():
                     ry = y * 180.0 / 3.141592653589793
                     rz = z * 180.0 / 3.141592653589793
 
-                    #計算距離
+                    # 計算距離
                     distance = ((tvec[0][0][2] + 0.02) * 0.0254) * 100
                     print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID,rx,ry,rz,distance))
 
