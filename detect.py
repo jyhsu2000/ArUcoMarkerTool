@@ -208,6 +208,7 @@ def main():
                 rz = z * 180.0 / 3.141592653589793
 
                 # 計算距離
+                # TODO: 距離計算跟 marker 的實際尺寸有關，須確認如何讓使用者設定
                 distance = ((tvec[0][0][2] + 0.02) * 0.0254) * 100
                 # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
                 detected_markers.append(pd.DataFrame({
