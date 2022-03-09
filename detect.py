@@ -42,7 +42,6 @@ def main():
     selected_aruco_dict = ARUCO_DICT[default_aruco_dict_name]
     draw_custom_marker = False
     draw_axis = False
-    distance_text = False
     undistortion = True
 
     sg.theme('DefaultNoMoreNagging')
@@ -73,7 +72,6 @@ def main():
                      default_value=default_aruco_dict_name, enable_events=True),
             sg.Checkbox('Draw custom marker', key='draw_custom_marker', enable_events=True, default=draw_custom_marker),
             sg.Checkbox('Draw axis', key='draw_axis', enable_events=True, default=draw_axis),
-            sg.Checkbox('Draw distance', key='draw_distance', enable_events=True, default=distance_text),
             sg.Checkbox('Undistortion', key='undistortion', enable_events=True, default=undistortion),
         ],
         [
@@ -189,37 +187,36 @@ def main():
                     rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
                     aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rvec, tvec, 0.01)
 
-                if distance_text:
-                    rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
-                    # 計算角度
-                    deg = rvec[0][0][2] * 180 / np.pi
-                    R = np.zeros((3, 3), dtype=np.float64)
-                    cv2.Rodrigues(rvec, R)
-                    sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
-                    singular = sy < 1e-6
-                    if not singular:  # 偏航，俯仰，滾動
-                        x = math.atan2(R[2, 1], R[2, 2])
-                        y = math.atan2(-R[2, 0], sy)
-                        z = math.atan2(R[1, 0], R[0, 0])
-                    else:
-                        x = math.atan2(-R[1, 2], R[1, 1])
-                        y = math.atan2(-R[2, 0], sy)
-                        z = 0
-                    # 偏航，俯仰，滾動换成角度
-                    rx = x * 180.0 / 3.141592653589793
-                    ry = y * 180.0 / 3.141592653589793
-                    rz = z * 180.0 / 3.141592653589793
+                rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
+                # 計算角度
+                deg = rvec[0][0][2] * 180 / np.pi
+                R = np.zeros((3, 3), dtype=np.float64)
+                cv2.Rodrigues(rvec, R)
+                sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
+                singular = sy < 1e-6
+                if not singular:  # 偏航，俯仰，滾動
+                    x = math.atan2(R[2, 1], R[2, 2])
+                    y = math.atan2(-R[2, 0], sy)
+                    z = math.atan2(R[1, 0], R[0, 0])
+                else:
+                    x = math.atan2(-R[1, 2], R[1, 1])
+                    y = math.atan2(-R[2, 0], sy)
+                    z = 0
+                # 偏航，俯仰，滾動换成角度
+                rx = x * 180.0 / 3.141592653589793
+                ry = y * 180.0 / 3.141592653589793
+                rz = z * 180.0 / 3.141592653589793
 
-                    # 計算距離
-                    distance = ((tvec[0][0][2] + 0.02) * 0.0254) * 100
-                    # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
-                    detected_markers.append(pd.DataFrame({
-                        'marker_id': markerID,
-                        '偏航(yaw)': round(rx),
-                        '俯仰(pitch)': round(ry),
-                        '滾動(roll)': round(rz),
-                        '距離(distance)': round(distance, 2),
-                    }, index=[0]))
+                # 計算距離
+                distance = ((tvec[0][0][2] + 0.02) * 0.0254) * 100
+                # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
+                detected_markers.append(pd.DataFrame({
+                    'marker_id': markerID,
+                    '偏航(yaw)': round(rx),
+                    '俯仰(pitch)': round(ry),
+                    '滾動(roll)': round(rz),
+                    '距離(distance)': round(distance, 2),
+                }, index=[0]))
             if detected_markers:
                 detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['marker_id'])
             else:
