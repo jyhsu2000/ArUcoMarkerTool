@@ -40,7 +40,7 @@ ARUCO_DICT = {
 def main():
     default_aruco_dict_name = 'DICT_ARUCO_ORIGINAL'
     selected_aruco_dict = ARUCO_DICT[default_aruco_dict_name]
-    draw_custom_marker = True
+    draw_custom_marker = False
     draw_axis = False
     distance_text = False
     undistortion = True
