@@ -38,6 +38,13 @@ ARUCO_DICT = {
 
 
 def main():
+    default_aruco_dict_name = 'DICT_ARUCO_ORIGINAL'
+    selected_aruco_dict = ARUCO_DICT[default_aruco_dict_name]
+    draw_custom_marker = True
+    draw_axis = False
+    distance_text = False
+    undistortion = True
+
     sg.theme('DefaultNoMoreNagging')
 
     empty_detected_marker_df = pd.DataFrame(columns=['marker_id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '距離(distance)'])
@@ -63,11 +70,11 @@ def main():
         [
             sg.Text('ArUco Dictionary:'),
             sg.Combo(values=list(ARUCO_DICT.keys()), key='dict_select', readonly=True, size=(40, 1),
-                     default_value='DICT_ARUCO_ORIGINAL', enable_events=True),
-            sg.Checkbox('Draw custom marker', key='draw_custom_marker', enable_events=True, default=True),
-            sg.Checkbox('Draw axis', key='draw_axis', enable_events=True, default=False),
-            sg.Checkbox('Draw distance', key='draw_distance', enable_events=True, default=False),
-            sg.Checkbox('Undistortion', key='undistortion', enable_events=True, default=True),
+                     default_value=default_aruco_dict_name, enable_events=True),
+            sg.Checkbox('Draw custom marker', key='draw_custom_marker', enable_events=True, default=draw_custom_marker),
+            sg.Checkbox('Draw axis', key='draw_axis', enable_events=True, default=draw_axis),
+            sg.Checkbox('Draw distance', key='draw_distance', enable_events=True, default=distance_text),
+            sg.Checkbox('Undistortion', key='undistortion', enable_events=True, default=undistortion),
         ],
         [
             sg.Text('', key='capture_fps', size=(15, 1), justification='center', font='Helvetica 20'),
@@ -79,12 +86,6 @@ def main():
     window = sg.Window('ArUcoMarkerDetection', layout, location=(100, 100))
 
     camera_looper = CameraLooper(window)
-
-    selected_aruco_dict = ARUCO_DICT['DICT_ARUCO_ORIGINAL']
-    draw_custom_marker = True
-    draw_axis = False
-    distance_text = False
-    undistortion = True
 
     recent_frame_count = 10
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
