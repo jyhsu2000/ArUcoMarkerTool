@@ -105,7 +105,6 @@ def main():
     while True:
         event, values = window.read(timeout=0)
         if event == sg.WIN_CLOSED:
-            print('Window closed')
             return
 
         if event == 'dict_select':
@@ -238,4 +237,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    print('End main')
