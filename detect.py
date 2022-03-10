@@ -113,8 +113,6 @@ def main():
             draw_custom_marker = values['draw_custom_marker']
         if event == 'draw_axis':
             draw_axis = values['draw_axis']
-        if event == 'draw_distance':
-            distance_text = values['draw_distance']
         if event == 'undistortion':
             undistortion = values['undistortion']
 
