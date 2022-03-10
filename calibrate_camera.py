@@ -161,7 +161,7 @@ def main():
 
     window = sg.Window('CalibrateCamera', layout, location=(100, 100))
 
-    camera_looper = CameraLooper(window)
+    camera_looper = CameraLooper()
 
     window.finalize()
     calibration_image_df = update_calibration_image_df(window, calibration_image_df)

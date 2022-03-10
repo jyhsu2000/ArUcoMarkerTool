@@ -83,7 +83,7 @@ def main():
 
     window = sg.Window('ArUcoMarkerDetection', layout, location=(100, 100))
 
-    camera_looper = CameraLooper(window)
+    camera_looper = CameraLooper()
 
     recent_frame_count = 10
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
@@ -105,6 +105,7 @@ def main():
     while True:
         event, values = window.read(timeout=0)
         if event == sg.WIN_CLOSED:
+            print('Window closed')
             return
 
         if event == 'dict_select':
@@ -237,3 +238,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    print('End main')

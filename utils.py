@@ -71,9 +71,8 @@ class CameraLooper(threading.Thread):
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
     fps = 0.0
 
-    def __init__(self, window):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.window = window
         self.daemon = True
         self.camera = Camera()
         self.start()
