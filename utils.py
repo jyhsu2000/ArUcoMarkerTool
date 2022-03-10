@@ -64,7 +64,6 @@ class Camera(metaclass=Singleton):
 
 class CameraLooper(threading.Thread):
     camera = None
-    window = None
     ret = None
     frame = None
     recent_frame_count = 10
