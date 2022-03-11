@@ -2,6 +2,7 @@ import functools
 import threading
 import time
 from collections import deque
+from typing import Tuple
 
 import cv2
 import numpy as np
@@ -31,18 +32,18 @@ def synchronized(wrapped):
 
 
 class Camera(metaclass=Singleton):
-    camera = None
+    camera: cv2.VideoCapture = None
 
     def __init__(self):
         self.connect()
 
     @synchronized
-    def read(self):
+    def read(self) -> Tuple[bool, np.ndarray]:
         ret, frame = self.camera.read()
         return ret, frame
 
     @synchronized
-    def connect(self):
+    def connect(self) -> None:
         print('Camera connecting...')
         self.camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
         print('VideoCapture created')
@@ -57,13 +58,13 @@ class Camera(metaclass=Singleton):
         print(f'FPS: {fps}')
 
     @synchronized
-    def reconnect(self):
+    def reconnect(self) -> None:
         print('Trying to reconnect...')
         self.release()
         self.connect()
 
     @synchronized
-    def release(self):
+    def release(self) -> None:
         print('Camera releasing...')
         self.camera.release()
 
