@@ -69,13 +69,13 @@ class Camera(metaclass=Singleton):
 
 
 class CameraLooper(threading.Thread):
-    is_running = False
-    camera = None
-    ret = None
-    frame = None
-    recent_frame_count = 10
-    recent_frame_time = deque([0.0], maxlen=recent_frame_count)
-    fps = 0.0
+    is_running: bool = False
+    camera: Camera = None
+    ret: bool = None
+    frame: np.ndarray = None
+    recent_frame_count: int = 10
+    recent_frame_time: deque = deque([0.0], maxlen=recent_frame_count)
+    fps: float = 0.0
 
     def __init__(self):
         self.is_running = True
