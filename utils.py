@@ -86,11 +86,11 @@ class CameraLooper(threading.Thread):
         self.start()
         print('CameraLooper started')
 
-    def run(self):
+    def run(self) -> None:
         self.camera_loop()
         threading.Timer(0, self.run).start()
 
-    def camera_loop(self):
+    def camera_loop(self) -> None:
         ret, frame = self.camera.read()
         if not ret and self.is_running:
             self.camera.reconnect()
@@ -103,10 +103,10 @@ class CameraLooper(threading.Thread):
         self.ret = ret
         self.frame = frame
 
-    def read(self):
+    def read(self) -> Tuple[bool, np.ndarray]:
         return self.ret, self.frame
 
-    def stop(self):
+    def stop(self) -> None:
         self.is_running = False
         self.camera.release()
         self.join()
