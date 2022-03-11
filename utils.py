@@ -58,8 +58,13 @@ class Camera(metaclass=Singleton):
     @synchronized
     def reconnect(self):
         print('Trying to reconnect...')
-        self.camera.release()
+        self.release()
         self.connect()
+
+    @synchronized
+    def release(self):
+        print('Camera releasing...')
+        self.camera.release()
 
 
 class CameraLooper(threading.Thread):
