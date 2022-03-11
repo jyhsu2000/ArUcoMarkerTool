@@ -68,6 +68,7 @@ class Camera(metaclass=Singleton):
 
 
 class CameraLooper(threading.Thread):
+    is_running = False
     camera = None
     ret = None
     frame = None
@@ -76,10 +77,12 @@ class CameraLooper(threading.Thread):
     fps = 0.0
 
     def __init__(self):
+        self.is_running = True
         threading.Thread.__init__(self)
         self.daemon = True
         self.camera = Camera()
         self.start()
+        print('CameraLooper started')
 
     def run(self):
         self.camera_loop()
@@ -87,7 +90,7 @@ class CameraLooper(threading.Thread):
 
     def camera_loop(self):
         ret, frame = self.camera.read()
-        if not ret:
+        if not ret and self.is_running:
             self.camera.reconnect()
             return
 
@@ -100,6 +103,12 @@ class CameraLooper(threading.Thread):
 
     def read(self):
         return self.ret, self.frame
+
+    def stop(self):
+        self.is_running = False
+        self.camera.release()
+        self.join()
+        print('CameraLooper stopped')
 
 
 def embed_img(src_img: np.array, dest_img: np.array, dest_points: list, alpha: float = 1) -> np.array:
