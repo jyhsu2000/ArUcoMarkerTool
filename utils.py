@@ -46,8 +46,9 @@ class Camera(metaclass=Singleton):
         print('Camera connecting...')
         self.camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
         print('VideoCapture created')
-        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+        # FIXME: 須確認正好 1280 * 720 時會黑屏的原因
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1281)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.camera.set(cv2.CAP_PROP_FPS, 60)
         width = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
