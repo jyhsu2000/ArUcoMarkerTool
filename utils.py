@@ -32,28 +32,28 @@ def synchronized(wrapped):
 
 
 class Camera(metaclass=Singleton):
-    camera: cv2.VideoCapture = None
+    cv2_camera: cv2.VideoCapture = None
 
     def __init__(self):
         self.connect()
 
     @synchronized
     def read(self) -> Tuple[bool, np.ndarray]:
-        ret, frame = self.camera.read()
+        ret, frame = self.cv2_camera.read()
         return ret, frame
 
     @synchronized
     def connect(self) -> None:
         print('Camera connecting...')
-        self.camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+        self.cv2_camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
         print('VideoCapture created')
         # FIXME: 須確認正好 1280 * 720 時會黑屏的原因（能 grab，但 retrieve 會出錯）
-        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1281)
-        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        self.camera.set(cv2.CAP_PROP_FPS, 60)
-        width = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
-        height = self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        fps = self.camera.get(cv2.CAP_PROP_FPS)
+        self.cv2_camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1281)
+        self.cv2_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.cv2_camera.set(cv2.CAP_PROP_FPS, 60)
+        width = self.cv2_camera.get(cv2.CAP_PROP_FRAME_WIDTH)
+        height = self.cv2_camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        fps = self.cv2_camera.get(cv2.CAP_PROP_FPS)
         print(f'Resolution: {width} * {height}')
         print(f'FPS: {fps}')
 
@@ -66,7 +66,7 @@ class Camera(metaclass=Singleton):
     @synchronized
     def release(self) -> None:
         print('Camera releasing...')
-        self.camera.release()
+        self.cv2_camera.release()
 
 
 class CameraLooper(threading.Thread):
