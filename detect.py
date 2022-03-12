@@ -143,7 +143,9 @@ def main():
             ret, frame = camera_looper.read()
             if not ret:
                 continue
-
+            # reize 圖片
+            frame = cv2.resize(frame,(640,360), interpolation=cv2.INTER_AREA)
+            
             if undistortion:
                 # 畸變修正
                 h, w = frame.shape[:2]
