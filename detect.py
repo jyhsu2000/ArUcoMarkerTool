@@ -144,7 +144,7 @@ def main():
             if not ret:
                 continue
             # reize 圖片
-            frame = cv2.resize(frame,(640,360), interpolation=cv2.INTER_AREA)
+            # frame = cv2.resize(frame,(640,360), interpolation=cv2.INTER_AREA)
             
             if undistortion:
                 # 畸變修正
