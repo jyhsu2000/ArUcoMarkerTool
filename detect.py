@@ -181,12 +181,11 @@ def main():
                         text_pad = create_text_pad(str(markerID))
                         frame = embed_img(text_pad, frame, [top_left, bottom_left, bottom_right, top_right], alpha=0.7)
 
+                    rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
                     # 繪製軸線
                     if draw_axis:
-                        rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
                         aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rvec, tvec, 0.01)
 
-                    rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
                     # 計算角度
                     deg = rvec[0][0][2] * 180 / np.pi
                     R = np.zeros((3, 3), dtype=np.float64)
