@@ -39,7 +39,7 @@ ARUCO_DICT = {
 
 
 def main():
-    default_aruco_dict_name = 'DICT_ARUCO_ORIGINAL'
+    default_aruco_dict_name = 'DICT_6X6_1000'
     selected_aruco_dict = ARUCO_DICT[default_aruco_dict_name]
     draw_crosshair = True
     draw_custom_marker = False
