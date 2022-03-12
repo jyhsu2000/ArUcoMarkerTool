@@ -125,12 +125,12 @@ def main():
                 undistortion = values['undistortion']
             if event == 'marker_length_mm_input':
                 marker_length_mm_input = values['marker_length_mm_input']
-                if len(marker_length_mm_input) > 4:
-                    marker_length_mm_input = marker_length_mm_input[:4]
+                if len(marker_length_mm_input) > 7:
+                    marker_length_mm_input = marker_length_mm_input[:7]
                 else:
-                    if re.match(r'^\d*$', marker_length_mm_input):
-                        if re.match(r'^\d+$', marker_length_mm_input):
-                            marker_length_mm = int(marker_length_mm_input)
+                    if re.match(r'^\d*\.?\d*$', marker_length_mm_input):
+                        if re.match(r'^\d+\.?\d*$', marker_length_mm_input):
+                            marker_length_mm = float(marker_length_mm_input)
                     else:
                         marker_length_mm_input = marker_length_mm
                 window['marker_length_mm_input'].update(marker_length_mm_input)
