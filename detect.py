@@ -269,6 +269,7 @@ def main():
             window['process_fps'].update(f'Process: {show_fps:.1f} fps')
     finally:
         camera_looper.stop()
+        window.close()
 
 
 if __name__ == '__main__':
