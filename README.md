@@ -1,6 +1,6 @@
 # ArUcoMarkerDemo
 
-Realtime ArUco marker detection demo
+Realtime ArUco marker calibration & detection tool
 
 ## Usage
 
