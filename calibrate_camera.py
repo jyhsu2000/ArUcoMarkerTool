@@ -176,7 +176,10 @@ def main():
                 break
 
             if event == 'table':
-                selected_row_index = values["table"][0]
+                try:
+                    selected_row_index = values["table"][0]
+                except IndexError:
+                    selected_row_index = None
                 if selected_row_index is not None:
                     selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
                     thread = threading.Thread(target=update_thumbnail_images, args=(window, selected_filename), daemon=True)
