@@ -10,6 +10,8 @@ import cv2.aruco as aruco
 import numpy as np
 import pandas as pd
 from PIL import Image, ImageTk, ImageOps
+from scipy.spatial.transform import Rotation as R
+
 
 from utils import CameraLooper, embed_img, create_text_pad, load_coefficients
 
@@ -37,6 +39,27 @@ ARUCO_DICT = {
     "DICT_APRILTAG_36h11": aruco.DICT_APRILTAG_36h11
 }
 
+def euler_from_quaternion(x, y, z, w):
+  """
+  Convert a quaternion into euler angles (roll, pitch, yaw)
+  roll is rotation around x in radians (counterclockwise)
+  pitch is rotation around y in radians (counterclockwise)
+  yaw is rotation around z in radians (counterclockwise)
+  """
+  t0 = +2.0 * (w * x + y * z)
+  t1 = +1.0 - 2.0 * (x * x + y * y)
+  roll_x = math.atan2(t0, t1)
+      
+  t2 = +2.0 * (w * y - z * x)
+  t2 = +1.0 if t2 > +1.0 else t2
+  t2 = -1.0 if t2 < -1.0 else t2
+  pitch_y = math.asin(t2)
+      
+  t3 = +2.0 * (w * z + x * y)
+  t4 = +1.0 - 2.0 * (y * y + z * z)
+  yaw_z = math.atan2(t3, t4)
+      
+  return roll_x, pitch_y, yaw_z # in radians
 
 def main():
     default_aruco_dict_name = 'DICT_6X6_1000'
@@ -212,31 +235,56 @@ def main():
                         aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rotation_vectors, translation_vectors, 0.01)
 
                     # 計算角度
-                    deg = rotation_vectors[0][0][2] * 180 / np.pi
-                    R = np.zeros((3, 3), dtype=np.float64)
-                    cv2.Rodrigues(rotation_vectors, R)
-                    sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
-                    singular = sy < 1e-6
-                    if not singular:  # 偏航，俯仰，滾動
-                        x = math.atan2(R[2, 1], R[2, 2])
-                        y = math.atan2(-R[2, 0], sy)
-                        z = math.atan2(R[1, 0], R[0, 0])
-                    else:
-                        x = math.atan2(-R[1, 2], R[1, 1])
-                        y = math.atan2(-R[2, 0], sy)
-                        z = 0
-                    # 偏航，俯仰，滾動换成角度
-                    rx = np.rad2deg(x)
-                    ry = np.rad2deg(y)
-                    rz = np.rad2deg(z)
+                    transform_translation_x = translation_vectors[0][0][0]
+                    transform_translation_y = translation_vectors[0][0][1]
+                    transform_translation_z = translation_vectors[0][0][2]
+
+                    rotation_matrix = np.eye(4)
+                    rotation_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rotation_vectors[0][0]))[0]
+                    r = R.from_matrix(rotation_matrix[0:3, 0:3])
+                    quat = r.as_quat()   
+
+                    transform_rotation_x = quat[0] 
+                    transform_rotation_y = quat[1] 
+                    transform_rotation_z = quat[2] 
+                    transform_rotation_w = quat[3] 
+
+                    roll_x, yaw_y, pitch_z = euler_from_quaternion(transform_rotation_x, 
+                                                       transform_rotation_y, 
+                                                       transform_rotation_z, 
+                                                       transform_rotation_w)
+
+                    roll_x = math.degrees(roll_x)
+                    yaw_y = math.degrees(yaw_y)
+                    pitch_z = math.degrees(pitch_z)
+
+                    # r = R.from_matrix(rotation_matrix[0:3, 0:3])
+                    # quat = r.as_quat()   
+                    # deg = rotation_vectors[0][0][2] * 180 / np.pi
+                    # R = np.zeros((3, 3), dtype=np.float64)
+                    # cv2.Rodrigues(rotation_vectors, R)
+                    # sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
+                    # singular = sy < 1e-6
+                    # if not singular:  # 偏航，俯仰，滾動
+                    #     x = math.atan2(R[2, 1], R[2, 2])
+                    #     y = math.atan2(-R[2, 0], sy)
+                    #     z = math.atan2(R[1, 0], R[0, 0])
+                    # else:
+                    #     x = math.atan2(-R[1, 2], R[1, 1])
+                    #     y = math.atan2(-R[2, 0], sy)
+                    #     z = 0
+                    # # 偏航，俯仰，滾動换成角度
+                    # rx = np.rad2deg(x)
+                    # ry = np.rad2deg(y)
+                    # rz = np.rad2deg(z)
 
                     # 計算距離
                     # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
                     detected_markers.append(pd.DataFrame({
                         'id': markerID,
-                        '偏航(yaw)': round(rx),
-                        '俯仰(pitch)': round(ry),
-                        '滾動(roll)': round(rz),
+                        '偏航(yaw)': round(yaw_y),
+                        '俯仰(pitch)': round(pitch_z),
+                        '滾動(roll)': round(roll_x),
                         '橫向偏移(cm)': round(translation_vectors[0][0][0] / 10),
                         '縱向偏移(cm)': round(translation_vectors[0][0][1] / 10),
                         '距離(cm)': round(translation_vectors[0][0][2] / 10),
