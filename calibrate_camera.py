@@ -169,96 +169,97 @@ def main():
     recent_frame_count = 10
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
 
-    while True:
-        event, values = window.read(timeout=0)
-        if event == sg.WIN_CLOSED:
-            break
+    try:
+        while True:
+            event, values = window.read(timeout=0)
+            if event == sg.WIN_CLOSED:
+                break
 
-        if event == 'table':
-            selected_row_index = values["table"][0]
-            if selected_row_index is not None:
-                selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
-                thread = threading.Thread(target=update_thumbnail_images, args=(window, selected_filename), daemon=True)
-                thread.start()
-                window['delete_selected_image'].update(disabled=False)
-            else:
-                window['thumbnail'].update(source=None)
-                window['thumbnail_with_marker'].update(source=None)
-                window['delete_selected_image'].update(disabled=True)
-
-        if event == 'update_chessboard_detect_result':
-            filename, ret = values['update_chessboard_detect_result']
-            calibration_image_df.loc[calibration_image_df.filename == filename, 'chessboard'] = ret
-            window['table'].update(values=calibration_image_df.values.tolist())
-            try:
+            if event == 'table':
                 selected_row_index = values["table"][0]
-            except:
-                selected_row_index = None
-            if selected_row_index is not None:
-                window['table'].update(select_rows=[selected_row_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
+                if selected_row_index is not None:
+                    selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
+                    thread = threading.Thread(target=update_thumbnail_images, args=(window, selected_filename), daemon=True)
+                    thread.start()
+                    window['delete_selected_image'].update(disabled=False)
+                else:
+                    window['thumbnail'].update(source=None)
+                    window['thumbnail_with_marker'].update(source=None)
+                    window['delete_selected_image'].update(disabled=True)
+
+            if event == 'update_chessboard_detect_result':
+                filename, ret = values['update_chessboard_detect_result']
+                calibration_image_df.loc[calibration_image_df.filename == filename, 'chessboard'] = ret
+                window['table'].update(values=calibration_image_df.values.tolist())
+                try:
+                    selected_row_index = values["table"][0]
+                except:
+                    selected_row_index = None
+                if selected_row_index is not None:
+                    window['table'].update(select_rows=[selected_row_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
+                    eat_next_event(window, 'table')  # 消除前述錯誤觸發的事件
+
+            if event == 'update_thumbnail_image':
+                thumbnail_image = values['update_thumbnail_image']
+                window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
+
+            if event == 'update_thumbnail_image_with_marker':
+                thumbnail_image_with_marker = values['update_thumbnail_image_with_marker']
+                window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
+
+            if event == 'delete_selected_image':
+                selected_row_index = values["table"][0]
+                selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
+                file_path = os.path.join(calibration_images_path, selected_filename)
+                os.remove(file_path)
+                calibration_image_df = update_calibration_image_df(window, calibration_image_df)
+                window.write_event_value('table', [None])
+
+            if event == 'calibrate':
+                window['calibrate'].update(disabled=True)
+                thread = threading.Thread(target=calibrate, args=(window, calibration_image_df), daemon=True)
+                thread.start()
+
+            if event == 'calibrate_finished':
+                window['progress'].update_bar(1, max=1)
+                custom_message = values['calibrate_finished']
+                sg.popup(custom_message)
+                window['calibrate'].update(disabled=False)
+
+            if event == 'update_progress':
+                current_count, max_value = values['update_progress']
+                window['progress'].update_bar(current_count, max=max_value)
+
+            ret, frame = camera_looper.read()
+            if not ret:
+                continue
+
+            if event == 'capture':
+                filename = time.strftime('%Y%m%d_%H%M%S', time.localtime()) + '.jpg'
+                file_path = os.path.join(calibration_images_path, filename)
+                if not os.path.exists(os.path.dirname(file_path)):
+                    os.makedirs(os.path.dirname(file_path))
+                cv2.imwrite(file_path, frame)
+
+                # Update file list
+                calibration_image_df = update_calibration_image_df(window, calibration_image_df)
+                selected_index = calibration_image_df.filename.eq(filename).idxmax()
+                window['table'].update(select_rows=[selected_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
+                window['table'].Widget.see(selected_index + 1)
                 eat_next_event(window, 'table')  # 消除前述錯誤觸發的事件
+                window.write_event_value('table', [selected_index])
 
-        if event == 'update_thumbnail_image':
-            thumbnail_image = values['update_thumbnail_image']
-            window['thumbnail'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image[:, :, ::-1])))
+            # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
+            img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
+            window['image'].update(data=img_bytes)
+            window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
 
-        if event == 'update_thumbnail_image_with_marker':
-            thumbnail_image_with_marker = values['update_thumbnail_image_with_marker']
-            window['thumbnail_with_marker'].update(data=ImageTk.PhotoImage(image=Image.fromarray(thumbnail_image_with_marker[:, :, ::-1])))
-
-        if event == 'delete_selected_image':
-            selected_row_index = values["table"][0]
-            selected_filename = calibration_image_df.loc[selected_row_index, 'filename']
-            file_path = os.path.join(calibration_images_path, selected_filename)
-            os.remove(file_path)
-            calibration_image_df = update_calibration_image_df(window, calibration_image_df)
-            window.write_event_value('table', [None])
-
-        if event == 'calibrate':
-            window['calibrate'].update(disabled=True)
-            thread = threading.Thread(target=calibrate, args=(window, calibration_image_df), daemon=True)
-            thread.start()
-
-        if event == 'calibrate_finished':
-            window['progress'].update_bar(1, max=1)
-            custom_message = values['calibrate_finished']
-            sg.popup(custom_message)
-            window['calibrate'].update(disabled=False)
-
-        if event == 'update_progress':
-            current_count, max_value = values['update_progress']
-            window['progress'].update_bar(current_count, max=max_value)
-
-        ret, frame = camera_looper.read()
-        if not ret:
-            continue
-
-        if event == 'capture':
-            filename = time.strftime('%Y%m%d_%H%M%S', time.localtime()) + '.jpg'
-            file_path = os.path.join(calibration_images_path, filename)
-            if not os.path.exists(os.path.dirname(file_path)):
-                os.makedirs(os.path.dirname(file_path))
-            cv2.imwrite(file_path, frame)
-
-            # Update file list
-            calibration_image_df = update_calibration_image_df(window, calibration_image_df)
-            selected_index = calibration_image_df.filename.eq(filename).idxmax()
-            window['table'].update(select_rows=[selected_index])  # 似乎會自動觸發事件（似乎被認定為 Bug）
-            window['table'].Widget.see(selected_index + 1)
-            eat_next_event(window, 'table')  # 消除前述錯誤觸發的事件
-            window.write_event_value('table', [selected_index])
-
-        # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
-        img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
-        window['image'].update(data=img_bytes)
-        window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
-
-        new_frame_time = time.time()
-        show_fps = 1 / ((new_frame_time - recent_frame_time[0]) / recent_frame_count)
-        recent_frame_time.append(new_frame_time)
-        window['process_fps'].update(f'Process: {show_fps:.1f} fps')
-
-    camera_looper.stop()
+            new_frame_time = time.time()
+            show_fps = 1 / ((new_frame_time - recent_frame_time[0]) / recent_frame_count)
+            recent_frame_time.append(new_frame_time)
+            window['process_fps'].update(f'Process: {show_fps:.1f} fps')
+    finally:
+        camera_looper.stop()
 
 
 if __name__ == '__main__':
