@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import math
+import re
 import time
 from collections import deque
 
@@ -44,9 +45,12 @@ def main():
     draw_axis = False
     undistortion = True
 
+    marker_length_mm = 103
+    marker_length_mm = 21
+
     sg.theme('DefaultNoMoreNagging')
 
-    empty_detected_marker_df = pd.DataFrame(columns=['marker_id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '距離(distance)'])
+    empty_detected_marker_df = pd.DataFrame(columns=['marker_id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '距離(cm)'])
 
     layout = [
         [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
@@ -73,6 +77,9 @@ def main():
             sg.Checkbox('Draw custom marker', key='draw_custom_marker', enable_events=True, default=draw_custom_marker),
             sg.Checkbox('Draw axis', key='draw_axis', enable_events=True, default=draw_axis),
             sg.Checkbox('Undistortion', key='undistortion', enable_events=True, default=undistortion),
+            sg.Text('Marker length (mm):'),
+            sg.Text(marker_length_mm, key='marker_length_mm'),
+            sg.InputText(key='marker_length_mm_input', size=(10, 1), justification='center', enable_events=True, default_text=marker_length_mm),
         ],
         [
             sg.Text('', key='capture_fps', size=(15, 1), justification='center', font='Helvetica 20'),
@@ -116,6 +123,18 @@ def main():
                 draw_axis = values['draw_axis']
             if event == 'undistortion':
                 undistortion = values['undistortion']
+            if event == 'marker_length_mm_input':
+                marker_length_mm_input = values['marker_length_mm_input']
+                if len(marker_length_mm_input) > 4:
+                    marker_length_mm_input = marker_length_mm_input[:4]
+                else:
+                    if re.match(r'^\d*$', marker_length_mm_input):
+                        if re.match(r'^\d+$', marker_length_mm_input):
+                            marker_length_mm = int(marker_length_mm_input)
+                    else:
+                        marker_length_mm_input = marker_length_mm
+                window['marker_length_mm_input'].update(marker_length_mm_input)
+                window['marker_length_mm'].update(marker_length_mm)
 
             ret, frame = camera_looper.read()
             if not ret:
@@ -181,7 +200,7 @@ def main():
                         text_pad = create_text_pad(str(markerID))
                         frame = embed_img(text_pad, frame, [top_left, bottom_left, bottom_right, top_right], alpha=0.7)
 
-                    rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, 0.02, camera_matrix, distortion_coefficients)
+                    rvec, tvec, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, marker_length_mm, camera_matrix, distortion_coefficients)
                     # 繪製軸線
                     if draw_axis:
                         aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rvec, tvec, 0.01)
@@ -206,15 +225,14 @@ def main():
                     rz = z * 180.0 / 3.141592653589793
 
                     # 計算距離
-                    # TODO: 距離計算跟 marker 的實際尺寸有關，須確認如何讓使用者設定
-                    distance = ((tvec[0][0][2] + 0.02) * 0.13) * 100
+                    distance_cm = tvec[0][0][2] / 10
                     # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
                     detected_markers.append(pd.DataFrame({
                         'marker_id': markerID,
                         '偏航(yaw)': round(rx),
                         '俯仰(pitch)': round(ry),
                         '滾動(roll)': round(rz),
-                        '距離(distance)': round(distance, 2),
+                        '距離(cm)': round(distance_cm),
                     }, index=[0]))
                 if detected_markers:
                     detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['marker_id'])
