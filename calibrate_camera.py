@@ -172,7 +172,7 @@ def main():
     while True:
         event, values = window.read(timeout=0)
         if event == sg.WIN_CLOSED:
-            return
+            break
 
         if event == 'table':
             selected_row_index = values["table"][0]
@@ -257,6 +257,8 @@ def main():
         show_fps = 1 / ((new_frame_time - recent_frame_time[0]) / recent_frame_count)
         recent_frame_time.append(new_frame_time)
         window['process_fps'].update(f'Process: {show_fps:.1f} fps')
+
+    camera_looper.stop()
 
 
 if __name__ == '__main__':
