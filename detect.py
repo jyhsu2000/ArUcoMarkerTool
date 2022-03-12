@@ -88,7 +88,7 @@ def main():
     recent_frame_count = 10
     recent_frame_time = deque([0.0], maxlen=recent_frame_count)
 
-    # 鏡頭校準相關參數，暫時先寫死
+    # 鏡頭校準相關參數
     camera_matrix, distortion_coefficients = load_coefficients()
     if camera_matrix is None:
         print('No "camera_matrix" in camera.yml. Use default value.')
