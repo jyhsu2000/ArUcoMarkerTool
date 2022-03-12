@@ -41,6 +41,7 @@ ARUCO_DICT = {
 def main():
     default_aruco_dict_name = 'DICT_ARUCO_ORIGINAL'
     selected_aruco_dict = ARUCO_DICT[default_aruco_dict_name]
+    draw_crosshair = True
     draw_custom_marker = False
     draw_axis = False
     undistortion = True
@@ -74,6 +75,7 @@ def main():
             sg.Text('ArUco Dictionary:'),
             sg.Combo(values=list(ARUCO_DICT.keys()), key='dict_select', readonly=True, size=(40, 1),
                      default_value=default_aruco_dict_name, enable_events=True),
+            sg.Checkbox('Draw crosshair', key='draw_crosshair', enable_events=True, default=draw_crosshair),
             sg.Checkbox('Draw custom marker', key='draw_custom_marker', enable_events=True, default=draw_custom_marker),
             sg.Checkbox('Draw axis', key='draw_axis', enable_events=True, default=draw_axis),
             sg.Checkbox('Undistortion', key='undistortion', enable_events=True, default=undistortion),
@@ -117,6 +119,8 @@ def main():
 
             if event == 'dict_select':
                 selected_aruco_dict = ARUCO_DICT[values['dict_select']]
+            if event == 'draw_crosshair':
+                draw_crosshair = values['draw_crosshair']
             if event == 'draw_custom_marker':
                 draw_custom_marker = values['draw_custom_marker']
             if event == 'draw_axis':
@@ -242,6 +246,17 @@ def main():
                 window['detected_marker_table'].update(values=detected_marker_df.values.tolist())
             else:
                 window['detected_marker_table'].update(values=empty_detected_marker_df.values.tolist())
+
+            if draw_crosshair:
+                pen_radius = max(frame.shape[0], frame.shape[1]) / 256
+                center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
+                percent = max(frame.shape[0], frame.shape[1]) / 100
+                cv2.line(frame, (center_x, int(center_y - percent * 2)), (center_x, int(center_y - percent * 1)), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (center_x, int(center_y + percent * 1)), (center_x, int(center_y + percent * 2)), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (int(center_x - percent * 2), center_y), (int(center_x - percent * 1), center_y), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (int(center_x + percent * 1), center_y), (int(center_x + percent * 2), center_y), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (center_x, int(center_y - percent * 2)), (center_x, int(center_y + percent * 2)), (0, 255, 255), int(pen_radius // 3))
+                cv2.line(frame, (int(center_x - percent * 2), center_y), (int(center_x + percent * 2), center_y), (0, 255, 255), int(pen_radius // 3))
 
             # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
             img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
