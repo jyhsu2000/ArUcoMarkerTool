@@ -224,9 +224,9 @@ def main():
                         y = math.atan2(-R[2, 0], sy)
                         z = 0
                     # 偏航，俯仰，滾動换成角度
-                    rx = x * 180.0 / 3.141592653589793
-                    ry = y * 180.0 / 3.141592653589793
-                    rz = z * 180.0 / 3.141592653589793
+                    rx = np.rad2deg(x)
+                    ry = np.rad2deg(y)
+                    rz = np.rad2deg(z)
 
                     # 計算距離
                     # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
