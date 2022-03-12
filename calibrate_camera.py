@@ -5,16 +5,14 @@ import re
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass
 
 import PySimpleGUI as sg
 import cv2
 import imutils
-import numpy as np
 import pandas as pd
 from PIL import Image, ImageTk
 
-from utils import CameraLooper, eat_next_event, save_coefficients
+from utils import CameraLooper, eat_next_event, save_coefficients, Chessboard
 
 calibration_images_path = './calibration_images'
 thumbnail_size = (400, 300)
@@ -22,24 +20,6 @@ thumbnail_size = (400, 300)
 # 找棋盤格角點
 # 設置尋找亞像素角點的參數，採用的停止準則是最大循環次數30和最大誤差容限0.001
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)  # 阈值
-
-
-@dataclass
-class Chessboard:
-    # 棋盤格模板規格
-    w: int
-    h: int
-    square_size_mm: float
-
-    @property
-    def objp(self):
-        # 世界坐標系中的棋盤格點,例如(0,0,0), (1,0,0), (2,0,0) ....,(8,5,0)，去掉Z坐標，記為二維矩陣
-        objp = np.zeros((self.w * self.h, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:self.w, 0:self.h].T.reshape(-1, 2)
-        square_size_mm = 24.6  # 棋盤格的寬度（務必正確設定，避免影響距離估算）
-        objp = objp * square_size_mm
-        return objp
-
 
 # 預設棋盤格模板規格
 default_chessboard = Chessboard(w=9, h=6, square_size_mm=24.6)

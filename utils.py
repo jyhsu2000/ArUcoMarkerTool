@@ -2,6 +2,7 @@ import functools
 import threading
 import time
 from collections import deque
+from dataclasses import dataclass
 from typing import Tuple
 
 import cv2
@@ -111,6 +112,23 @@ class CameraLooper(threading.Thread):
         self.camera.release()
         self.join()
         print('CameraLooper stopped')
+
+
+@dataclass
+class Chessboard:
+    # 棋盤格模板規格
+    w: int
+    h: int
+    square_size_mm: float
+
+    @property
+    def objp(self):
+        # 世界坐標系中的棋盤格點,例如(0,0,0), (1,0,0), (2,0,0) ....,(8,5,0)，去掉Z坐標，記為二維矩陣
+        objp = np.zeros((self.w * self.h, 3), np.float32)
+        objp[:, :2] = np.mgrid[0:self.w, 0:self.h].T.reshape(-1, 2)
+        square_size_mm = 24.6  # 棋盤格的寬度（務必正確設定，避免影響距離估算）
+        objp = objp * square_size_mm
+        return objp
 
 
 def embed_img(src_img: np.array, dest_img: np.array, dest_points: list, alpha: float = 1) -> np.array:
