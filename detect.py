@@ -9,7 +9,7 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageOps
 
 from utils import CameraLooper, embed_img, create_text_pad, load_coefficients
 
@@ -259,7 +259,9 @@ def main():
                 cv2.line(frame, (int(center_x - percent * 2), center_y), (int(center_x + percent * 2), center_y), (0, 255, 255), int(pen_radius // 3))
 
             # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
-            img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
+            image = Image.fromarray(frame[:, :, ::-1])
+            resized_image = ImageOps.contain(image, (1080, 1080))
+            img_bytes = ImageTk.PhotoImage(image=resized_image)
             window['image'].update(data=img_bytes)
             window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
 

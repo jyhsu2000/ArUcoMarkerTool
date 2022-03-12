@@ -10,7 +10,7 @@ import PySimpleGUI as sg
 import cv2
 import imutils
 import pandas as pd
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageOps
 
 from utils import CameraLooper, eat_next_event, save_coefficients, Chessboard
 
@@ -301,7 +301,9 @@ def main():
                 window.write_event_value('table', [selected_index])
 
             # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
-            img_bytes = ImageTk.PhotoImage(image=Image.fromarray(frame[:, :, ::-1]))
+            image = Image.fromarray(frame[:, :, ::-1])
+            resized_image = ImageOps.contain(image, (1080, 1080))
+            img_bytes = ImageTk.PhotoImage(image=resized_image)
             window['image'].update(data=img_bytes)
             window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
 
