@@ -50,7 +50,7 @@ def main():
 
     sg.theme('DefaultNoMoreNagging')
 
-    empty_detected_marker_df = pd.DataFrame(columns=['marker_id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '距離(cm)'])
+    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)'])
 
     layout = [
         [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
@@ -225,17 +225,18 @@ def main():
                     rz = z * 180.0 / 3.141592653589793
 
                     # 計算距離
-                    distance_cm = translation_vectors[0][0][2] / 10
                     # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
                     detected_markers.append(pd.DataFrame({
-                        'marker_id': markerID,
+                        'id': markerID,
                         '偏航(yaw)': round(rx),
                         '俯仰(pitch)': round(ry),
                         '滾動(roll)': round(rz),
-                        '距離(cm)': round(distance_cm),
+                        '橫向偏移(cm)': round(translation_vectors[0][0][0] / 10),
+                        '縱向偏移(cm)': round(translation_vectors[0][0][1] / 10),
+                        '距離(cm)': round(translation_vectors[0][0][2] / 10),
                     }, index=[0]))
                 if detected_markers:
-                    detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['marker_id'])
+                    detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['id'])
                 else:
                     detected_marker_df = empty_detected_marker_df
                 window['detected_marker_table'].update(values=detected_marker_df.values.tolist())
