@@ -12,7 +12,6 @@ import pandas as pd
 from PIL import Image, ImageTk, ImageOps
 from scipy.spatial.transform import Rotation as R
 
-
 from utils import CameraLooper, embed_img, create_text_pad, load_coefficients
 
 ARUCO_DICT = {
@@ -39,27 +38,29 @@ ARUCO_DICT = {
     "DICT_APRILTAG_36h11": aruco.DICT_APRILTAG_36h11
 }
 
+
 def euler_from_quaternion(x, y, z, w):
-  """
-  Convert a quaternion into euler angles (roll, pitch, yaw)
-  roll is rotation around x in radians (counterclockwise)
-  pitch is rotation around y in radians (counterclockwise)
-  yaw is rotation around z in radians (counterclockwise)
-  """
-  t0 = +2.0 * (w * x + y * z)
-  t1 = +1.0 - 2.0 * (x * x + y * y)
-  roll_x = math.atan2(t0, t1)
-      
-  t2 = +2.0 * (w * y - z * x)
-  t2 = +1.0 if t2 > +1.0 else t2
-  t2 = -1.0 if t2 < -1.0 else t2
-  pitch_y = math.asin(t2)
-      
-  t3 = +2.0 * (w * z + x * y)
-  t4 = +1.0 - 2.0 * (y * y + z * z)
-  yaw_z = math.atan2(t3, t4)
-      
-  return roll_x, pitch_y, yaw_z # in radians
+    """
+    Convert a quaternion into euler angles (roll, pitch, yaw)
+    roll is rotation around x in radians (counterclockwise)
+    pitch is rotation around y in radians (counterclockwise)
+    yaw is rotation around z in radians (counterclockwise)
+    """
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll_x = math.atan2(t0, t1)
+
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch_y = math.asin(t2)
+
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw_z = math.atan2(t3, t4)
+
+    return roll_x, pitch_y, yaw_z  # in radians
+
 
 def main():
     default_aruco_dict_name = 'DICT_6X6_1000'
@@ -168,7 +169,7 @@ def main():
                 continue
             # reize 圖片
             # frame = cv2.resize(frame,(640,360), interpolation=cv2.INTER_AREA)
-            
+
             if undistortion:
                 # 畸變修正
                 h, w = frame.shape[:2]
@@ -242,24 +243,24 @@ def main():
                     rotation_matrix = np.eye(4)
                     rotation_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rotation_vectors[0][0]))[0]
                     r = R.from_matrix(rotation_matrix[0:3, 0:3])
-                    quat = r.as_quat()   
+                    quat = r.as_quat()
 
-                    transform_rotation_x = quat[0] 
-                    transform_rotation_y = quat[1] 
-                    transform_rotation_z = quat[2] 
-                    transform_rotation_w = quat[3] 
+                    transform_rotation_x = quat[0]
+                    transform_rotation_y = quat[1]
+                    transform_rotation_z = quat[2]
+                    transform_rotation_w = quat[3]
 
-                    roll_x, yaw_y, pitch_z = euler_from_quaternion(transform_rotation_x, 
-                                                       transform_rotation_y, 
-                                                       transform_rotation_z, 
-                                                       transform_rotation_w)
+                    roll_x, yaw_y, pitch_z = euler_from_quaternion(transform_rotation_x,
+                                                                   transform_rotation_y,
+                                                                   transform_rotation_z,
+                                                                   transform_rotation_w)
 
                     roll_x = math.degrees(roll_x)
                     yaw_y = math.degrees(yaw_y)
                     pitch_z = math.degrees(pitch_z)
 
                     # r = R.from_matrix(rotation_matrix[0:3, 0:3])
-                    # quat = r.as_quat()   
+                    # quat = r.as_quat()
                     # deg = rotation_vectors[0][0][2] * 180 / np.pi
                     # R = np.zeros((3, 3), dtype=np.float64)
                     # cv2.Rodrigues(rotation_vectors, R)
