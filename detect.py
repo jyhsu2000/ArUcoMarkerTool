@@ -75,7 +75,7 @@ def main():
 
     sg.theme('DefaultNoMoreNagging')
 
-    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)'])
+    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)','X角度','Y角度'])
 
     layout = [
         [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
@@ -168,7 +168,7 @@ def main():
             if not ret:
                 continue
             # reize 圖片
-            # frame = cv2.resize(frame,(640,360), interpolation=cv2.INTER_AREA)
+            # frame = cv2.resize(frame,(640,360))
 
             if undistortion:
                 # 畸變修正
@@ -239,6 +239,11 @@ def main():
                     rotation_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rotation_vectors[0][0]))[0]
                     r = R.from_matrix(rotation_matrix[0:3, 0:3])
                     quat = r.as_quat()
+                    # 計算角度
+                    transform_translation_x = translation_vectors[0][0][0]
+                    transform_translation_y = translation_vectors[0][0][1]
+                    transform_translation_z = translation_vectors[0][0][2]
+                    # print(f'{markerID} {transform_translation_x} {transform_translation_y} {transform_translation_z}')
 
                     transform_rotation_x = quat[2]
                     transform_rotation_y = quat[1]
@@ -284,6 +289,8 @@ def main():
                         '橫向偏移(cm)': round(translation_vectors[0][0][0] / 10),
                         '縱向偏移(cm)': round(translation_vectors[0][0][1] / 10),
                         '距離(cm)': round(translation_vectors[0][0][2] / 10),
+                        'X角度': round(transform_translation_x),
+                        'Y角度': round(transform_translation_y),
                     }, index=[0]))
                 if detected_markers:
                     detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['id'])
@@ -306,7 +313,7 @@ def main():
 
             # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
             image = Image.fromarray(frame[:, :, ::-1])
-            resized_image = ImageOps.contain(image, (1080, 1080))
+            resized_image = ImageOps.contain(image, (480, 360))
             img_bytes = ImageTk.PhotoImage(image=resized_image)
             window['image'].update(data=img_bytes)
             window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
