@@ -76,7 +76,7 @@ def main():
 
     sg.theme('DefaultNoMoreNagging')
 
-    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)','X角度','Y角度'])
+    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)', 'X角度', 'Y角度'])
 
     layout = [
         [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
