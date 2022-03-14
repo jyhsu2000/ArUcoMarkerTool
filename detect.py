@@ -69,18 +69,19 @@ def main():
     draw_custom_marker = False
     draw_axis = False
     undistortion = True
+    resize_size = 720
 
     marker_length_mm = 103
     marker_length_mm = 21
 
     sg.theme('DefaultNoMoreNagging')
 
-    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)','X角度','Y角度'])
+    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)', 'X角度', 'Y角度'])
 
     layout = [
         [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
         [
-            sg.Image(filename='', key='image'),
+            sg.Image(filename='', key='image', right_click_menu=['', ['Original size', 'Resize to 360', 'Resize to 480', 'Resize to 720', 'Resize to 1080']]),
             sg.Table(
                 values=empty_detected_marker_df.values.tolist(),
                 headings=empty_detected_marker_df.columns.tolist(),
@@ -141,6 +142,10 @@ def main():
             if event == sg.WIN_CLOSED:
                 break
 
+            if event == 'Original size':
+                resize_size = None
+            if event.startswith('Resize to '):
+                resize_size = int(event.split(' ')[-1])
             if event == 'dict_select':
                 selected_aruco_dict = ARUCO_DICT[values['dict_select']]
             if event == 'draw_crosshair':
@@ -233,7 +238,7 @@ def main():
                     rotation_vectors, translation_vectors, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, marker_length_mm, camera_matrix, distortion_coefficients)
                     # 繪製軸線
                     if draw_axis:
-                        aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rotation_vectors, translation_vectors, 0.01)
+                        aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rotation_vectors, translation_vectors, marker_length_mm / 2)
 
                     rotation_matrix = np.eye(4)
                     rotation_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rotation_vectors[0][0]))[0]
@@ -288,8 +293,9 @@ def main():
 
             # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
             image = Image.fromarray(frame[:, :, ::-1])
-            resized_image = ImageOps.contain(image, (480, 360))
-            img_bytes = ImageTk.PhotoImage(image=resized_image)
+            if resize_size:
+                image = ImageOps.contain(image, (resize_size, resize_size))
+            img_bytes = ImageTk.PhotoImage(image=image)
             window['image'].update(data=img_bytes)
             window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
 
