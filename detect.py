@@ -240,10 +240,7 @@ def main():
                     r = R.from_matrix(rotation_matrix[0:3, 0:3])
                     quat = r.as_quat()
                     # 計算角度
-                    transform_translation_x = translation_vectors[0][0][0]
-                    transform_translation_y = translation_vectors[0][0][1]
-                    transform_translation_z = translation_vectors[0][0][2]
-                    # print(f'{markerID} {transform_translation_x} {transform_translation_y} {transform_translation_z}')
+                    rmat, jacobian = cv2.Rodrigues(rotation_vectors)
 
                     transform_rotation_x = quat[2]
                     transform_rotation_y = quat[1]
@@ -259,28 +256,6 @@ def main():
                     yaw_y = math.degrees(yaw_y)
                     pitch_z = math.degrees(pitch_z)
 
-                    # r = R.from_matrix(rotation_matrix[0:3, 0:3])
-                    # quat = r.as_quat()
-                    # deg = rotation_vectors[0][0][2] * 180 / np.pi
-                    # R = np.zeros((3, 3), dtype=np.float64)
-                    # cv2.Rodrigues(rotation_vectors, R)
-                    # sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
-                    # singular = sy < 1e-6
-                    # if not singular:  # 偏航，俯仰，滾動
-                    #     x = math.atan2(R[2, 1], R[2, 2])
-                    #     y = math.atan2(-R[2, 0], sy)
-                    #     z = math.atan2(R[1, 0], R[0, 0])
-                    # else:
-                    #     x = math.atan2(-R[1, 2], R[1, 1])
-                    #     y = math.atan2(-R[2, 0], sy)
-                    #     z = 0
-                    # # 偏航，俯仰，滾動换成角度
-                    # rx = np.rad2deg(x)
-                    # ry = np.rad2deg(y)
-                    # rz = np.rad2deg(z)
-
-                    # 計算距離
-                    # print("ID {} 偏航 {} 俯仰 {} 滾動 {} 距離 {}".format(markerID, rx, ry, rz, distance))
                     detected_markers.append(pd.DataFrame({
                         'id': markerID,
                         '偏航(yaw)': round(yaw_y),
@@ -289,8 +264,8 @@ def main():
                         '橫向偏移(cm)': round(translation_vectors[0][0][0] / 10),
                         '縱向偏移(cm)': round(translation_vectors[0][0][1] / 10),
                         '距離(cm)': round(translation_vectors[0][0][2] / 10),
-                        'X角度': round(transform_translation_x),
-                        'Y角度': round(transform_translation_y),
+                        'X角度': (translation_vectors[0][0][2] / 10) / (translation_vectors[0][0][0] / 10),
+                        'Y角度': (translation_vectors[0][0][2] / 10) / (translation_vectors[0][0][1] / 10),
                     }, index=[0]))
                 if detected_markers:
                     detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['id'])
