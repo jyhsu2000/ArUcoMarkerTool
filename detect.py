@@ -76,7 +76,7 @@ def main():
 
     sg.theme('DefaultNoMoreNagging')
 
-    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)', 'X角度', 'Y角度'])
+    empty_detected_marker_df = pd.DataFrame(columns=['id', '偏航(yaw)', '俯仰(pitch)', '滾動(roll)', '橫向偏移(cm)', '縱向偏移(cm)', '距離(cm)', '橫向角度', '縱向角度'])
 
     layout = [
         [sg.Text('ArUcoMarkerDetection', size=(40, 1), justification='center', font='Helvetica 20', expand_x=True)],
@@ -261,16 +261,20 @@ def main():
                     yaw_y = math.degrees(yaw_y)
                     pitch_z = math.degrees(pitch_z)
 
+                    distance_cm = translation_vectors[0][0][2] / 10
+                    x_offset_cm = translation_vectors[0][0][0] / 10
+                    y_offset_cm = translation_vectors[0][0][1] / 10
+
                     detected_markers.append(pd.DataFrame({
                         'id': markerID,
                         '偏航(yaw)': round(yaw_y),
                         '俯仰(pitch)': round(pitch_z),
                         '滾動(roll)': round(roll_x),
-                        '橫向偏移(cm)': round(translation_vectors[0][0][0] / 10),
-                        '縱向偏移(cm)': round(translation_vectors[0][0][1] / 10),
-                        '距離(cm)': round(translation_vectors[0][0][2] / 10),
-                        'X角度': (translation_vectors[0][0][2] / 10) / (translation_vectors[0][0][0] / 10),
-                        'Y角度': (translation_vectors[0][0][2] / 10) / (translation_vectors[0][0][1] / 10),
+                        '橫向偏移(cm)': round(x_offset_cm),
+                        '縱向偏移(cm)': round(y_offset_cm),
+                        '距離(cm)': round(distance_cm),
+                        '橫向角度': round(math.degrees(math.asin(x_offset_cm / distance_cm))),
+                        '縱向角度': round(math.degrees(math.asin(y_offset_cm / distance_cm))),
                     }, index=[0]))
                 if detected_markers:
                     detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['id'])
