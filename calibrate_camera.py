@@ -114,6 +114,7 @@ def calibrate(window, chessboard: Chessboard, calibration_image_df: pd.DataFrame
 
 
 def main():
+    resize_size = 720
     chessboard = copy.deepcopy(default_chessboard)
 
     calibration_image_df = pd.DataFrame({
@@ -154,7 +155,7 @@ def main():
                     sg.ProgressBar(max_value=10, orientation='h', size=(20, 20), key='progress'),
                 ],
             ], expand_y=True),
-            sg.Image(filename='', key='image'),
+            sg.Image(filename='', key='image', right_click_menu=['', ['Original size', 'Resize to 360', 'Resize to 480', 'Resize to 720', 'Resize to 1080']]),
         ],
         [
             sg.Text('', key='capture_fps', size=(15, 1), justification='center', font='Helvetica 20'),
@@ -281,6 +282,11 @@ def main():
                 current_count, max_value = values['update_progress']
                 window['progress'].update_bar(current_count, max=max_value)
 
+            if event == 'Original size':
+                resize_size = None
+            if event.startswith('Resize to '):
+                resize_size = int(event.split(' ')[-1])
+
             ret, frame = camera_looper.read()
             if not ret:
                 continue
@@ -302,8 +308,9 @@ def main():
 
             # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
             image = Image.fromarray(frame[:, :, ::-1])
-            resized_image = ImageOps.contain(image, (1080, 1080))
-            img_bytes = ImageTk.PhotoImage(image=resized_image)
+            if resize_size:
+                image = ImageOps.contain(image, (resize_size, resize_size))
+            img_bytes = ImageTk.PhotoImage(image=image)
             window['image'].update(data=img_bytes)
             window['capture_fps'].update(f'Capture: {camera_looper.fps:.1f} fps')
 
