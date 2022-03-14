@@ -235,19 +235,14 @@ def main():
                     if draw_axis:
                         aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rotation_vectors, translation_vectors, 0.01)
 
-                    # 計算角度
-                    transform_translation_x = translation_vectors[0][0][0]
-                    transform_translation_y = translation_vectors[0][0][1]
-                    transform_translation_z = translation_vectors[0][0][2]
-
                     rotation_matrix = np.eye(4)
                     rotation_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rotation_vectors[0][0]))[0]
                     r = R.from_matrix(rotation_matrix[0:3, 0:3])
                     quat = r.as_quat()
 
-                    transform_rotation_x = quat[0]
+                    transform_rotation_x = quat[2]
                     transform_rotation_y = quat[1]
-                    transform_rotation_z = quat[2]
+                    transform_rotation_z = quat[0]
                     transform_rotation_w = quat[3]
 
                     roll_x, yaw_y, pitch_z = euler_from_quaternion(transform_rotation_x,
