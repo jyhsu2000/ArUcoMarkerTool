@@ -233,7 +233,7 @@ def main():
                     rotation_vectors, translation_vectors, marker_points = aruco.estimatePoseSingleMarkers(markerCorner, marker_length_mm, camera_matrix, distortion_coefficients)
                     # 繪製軸線
                     if draw_axis:
-                        aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rotation_vectors, translation_vectors, 0.01)
+                        aruco.drawAxis(frame, camera_matrix, distortion_coefficients, rotation_vectors, translation_vectors, marker_length_mm / 2)
 
                     rotation_matrix = np.eye(4)
                     rotation_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rotation_vectors[0][0]))[0]
