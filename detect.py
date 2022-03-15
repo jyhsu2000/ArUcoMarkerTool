@@ -286,14 +286,16 @@ def main():
 
             if draw_crosshair:
                 pen_radius = max(frame.shape[0], frame.shape[1]) / 256
-                center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
+                # center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
+                # optical centers
+                center_x, center_y = camera_matrix[0][2], camera_matrix[1][2]
                 percent = max(frame.shape[0], frame.shape[1]) / 100
-                cv2.line(frame, (center_x, int(center_y - percent * 2)), (center_x, int(center_y - percent * 1)), (0, 0, 255), int(pen_radius))
-                cv2.line(frame, (center_x, int(center_y + percent * 1)), (center_x, int(center_y + percent * 2)), (0, 0, 255), int(pen_radius))
-                cv2.line(frame, (int(center_x - percent * 2), center_y), (int(center_x - percent * 1), center_y), (0, 0, 255), int(pen_radius))
-                cv2.line(frame, (int(center_x + percent * 1), center_y), (int(center_x + percent * 2), center_y), (0, 0, 255), int(pen_radius))
-                cv2.line(frame, (center_x, int(center_y - percent * 2)), (center_x, int(center_y + percent * 2)), (0, 255, 255), int(pen_radius // 3))
-                cv2.line(frame, (int(center_x - percent * 2), center_y), (int(center_x + percent * 2), center_y), (0, 255, 255), int(pen_radius // 3))
+                cv2.line(frame, (int(center_x), int(center_y - percent * 2)), (int(center_x), int(center_y - percent * 1)), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (int(center_x), int(center_y + percent * 1)), (int(center_x), int(center_y + percent * 2)), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (int(center_x - percent * 2), int(center_y)), (int(center_x - percent * 1), int(center_y)), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (int(center_x + percent * 1), int(center_y)), (int(center_x + percent * 2), int(center_y)), (0, 0, 255), int(pen_radius))
+                cv2.line(frame, (int(center_x), int(center_y - percent * 2)), (int(center_x), int(center_y + percent * 2)), (0, 255, 255), int(pen_radius // 3))
+                cv2.line(frame, (int(center_x - percent * 2), int(center_y)), (int(center_x + percent * 2), int(center_y)), (0, 255, 255), int(pen_radius // 3))
 
             # img_bytes = cv2.imencode('.png', frame)[1].tobytes()
             image = Image.fromarray(frame[:, :, ::-1])
