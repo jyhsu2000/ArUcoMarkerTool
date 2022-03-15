@@ -8,6 +8,8 @@ from typing import Tuple
 import cv2
 import numpy as np
 
+from config import VIDEO_CAPTURE_SOURCE
+
 
 class Singleton(type):
     __instances = {}
@@ -46,7 +48,7 @@ class Camera(metaclass=Singleton):
     @synchronized
     def connect(self) -> None:
         print('Camera connecting...')
-        self.cv2_camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        self.cv2_camera = cv2.VideoCapture(VIDEO_CAPTURE_SOURCE, cv2.CAP_DSHOW)
         print('VideoCapture created')
         # FIXME: 須確認正好 1280 * 720 時會黑屏的原因（能 grab，但 retrieve 會出錯）
         self.cv2_camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1281)
