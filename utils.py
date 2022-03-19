@@ -50,8 +50,7 @@ class Camera(metaclass=Singleton):
         print('Camera connecting...')
         self.cv2_camera = cv2.VideoCapture(VIDEO_CAPTURE_SOURCE)
         print('VideoCapture created')
-        # FIXME: 須確認正好 1280 * 720 時會黑屏的原因（能 grab，但 retrieve 會出錯）
-        self.cv2_camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1281)
+        self.cv2_camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cv2_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.cv2_camera.set(cv2.CAP_PROP_FPS, 60)
         width = self.cv2_camera.get(cv2.CAP_PROP_FRAME_WIDTH)
