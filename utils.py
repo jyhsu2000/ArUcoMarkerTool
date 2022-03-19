@@ -89,6 +89,8 @@ class CameraLooper(threading.Thread):
         print('CameraLooper started')
 
     def run(self) -> None:
+        if not self.is_running:
+            return
         self.camera_loop()
         threading.Timer(0, self.run).start()
 
