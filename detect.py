@@ -265,6 +265,16 @@ def main():
                     x_offset_cm = translation_vectors[0][0][0] / 10
                     y_offset_cm = translation_vectors[0][0][1] / 10
 
+                    try:
+                        x_degree = math.degrees(math.asin(x_offset_cm / distance_cm))
+                    except ValueError:
+                        x_degree = 0
+
+                    try:
+                        y_degree = math.degrees(math.asin(y_offset_cm / distance_cm))
+                    except ValueError:
+                        y_degree = 0
+
                     detected_markers.append(pd.DataFrame({
                         'id': markerID,
                         '偏航(yaw)': round(yaw_y),
@@ -273,8 +283,8 @@ def main():
                         '橫向偏移(cm)': round(x_offset_cm),
                         '縱向偏移(cm)': round(y_offset_cm),
                         '距離(cm)': round(distance_cm),
-                        '橫向角度': round(math.degrees(math.asin(x_offset_cm / distance_cm))),
-                        '縱向角度': round(math.degrees(math.asin(y_offset_cm / distance_cm))),
+                        '橫向角度': round(x_degree),
+                        '縱向角度': round(y_degree),
                     }, index=[0]))
                 if detected_markers:
                     detected_marker_df = pd.concat([empty_detected_marker_df] + detected_markers).sort_values(by=['id'])
